@@ -12,6 +12,5 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
-/Content/AnimStarterPack
-/Content/MilitaryWeapSilver
-/Content/MilitaryCharDark
+/Content/Assets/MilitaryWeapSilver
+/Content/ParagonTwinblast

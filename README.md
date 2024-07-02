@@ -6,4 +6,4 @@ Assets from Marketplace:
 
 - Military Weapons Silver
 
-- Military Character Dark
+- Paragon: Twinblast
