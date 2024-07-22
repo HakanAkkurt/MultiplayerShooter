@@ -50,9 +50,12 @@ void UOverheadWidget::ShowPlayerNetRole(APawn* InPawn)
 		PlayerName = PlayerState->GetPlayerName();
 	}
 
-	FString RemoteRoleString = FString::Printf(TEXT("Remote Role: %s - Name: %s"), *Role, *PlayerName);
+	//FString RemoteRoleString = FString::Printf(TEXT("Remote Role: %s - Name: %s"), *Role, *PlayerName);
+
+	FString RemoteRoleString = FString::Printf(TEXT("%s"), *PlayerName);
 
 	SetDisplayText(RemoteRoleString);
+
 }
 
 void UOverheadWidget::NativeDestruct()
