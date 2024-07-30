@@ -33,6 +33,8 @@ APlayerCharacter::APlayerCharacter()
 
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
+
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 }
 
 
@@ -79,6 +81,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::LookUp);
 
 	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &APlayerCharacter::EquipButtonPressed);
+
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::CrouchButtonPressed);
+
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &APlayerCharacter::AimButtonPressed);
+
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &APlayerCharacter::AimButtonReleased);
 }
 
 void APlayerCharacter::MoveForward(float Value)
@@ -138,6 +146,35 @@ void APlayerCharacter::ServerEquipButtonPressed_Implementation()
 	}
 }
 
+void APlayerCharacter::CrouchButtonPressed()
+{
+	if (bIsCrouched) {
+
+		UnCrouch();
+	}
+	else {
+		Crouch();
+	}
+
+}
+
+void APlayerCharacter::AimButtonPressed()
+{
+	if (Combat) {
+
+		Combat->SetAiming(true);
+	}
+}
+
+void APlayerCharacter::AimButtonReleased()
+{
+	if (Combat) {
+
+		Combat->SetAiming(false);
+	}
+}
+
+
 void APlayerCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
 	if (IsLocallyControlled()) {
@@ -175,4 +212,9 @@ void APlayerCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 bool APlayerCharacter::IsWeaponEquipped()
 {
 	return (Combat && Combat->EquippedWeapon);
+}
+
+bool APlayerCharacter::IsAiming()
+{
+	return (Combat && Combat->bAiming);
 }
