@@ -9,6 +9,7 @@
 #include "Net/UnrealNetwork.h"
 #include "MultiplayerShooter/Weapon/Weapon.h"
 #include "MultiplayerShooter/Components/CombatComponent.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -35,6 +36,10 @@ APlayerCharacter::APlayerCharacter()
 	Combat->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
 }
 
 
