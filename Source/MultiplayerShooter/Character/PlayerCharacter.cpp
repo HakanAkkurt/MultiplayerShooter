@@ -11,6 +11,7 @@
 #include "MultiplayerShooter/Components/CombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "PlayerCharacterAnimInstance.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -81,6 +82,21 @@ void APlayerCharacter::PostInitializeComponents()
 	}
 }
 
+void APlayerCharacter::PlayFireMontage(bool bAiming)
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && FireWeaponMontage) {
+
+		AnimInstance->Montage_Play(FireWeaponMontage);
+		FName SectionName;
+		SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 // Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -98,8 +114,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &APlayerCharacter::CrouchButtonPressed);
 
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &APlayerCharacter::AimButtonPressed);
-
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &APlayerCharacter::AimButtonReleased);
+
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &APlayerCharacter::FireButtonPressed);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &APlayerCharacter::FireButtonReleased);
 }
 
 void APlayerCharacter::MoveForward(float Value)
@@ -240,6 +258,22 @@ void APlayerCharacter::Jump()
 	else {
 
 		Super::Jump();
+	}
+}
+
+void APlayerCharacter::FireButtonPressed()
+{
+	if (Combat) {
+
+		Combat->FireButtonPressed(true);
+	}
+}
+
+void APlayerCharacter::FireButtonReleased()
+{
+	if (Combat) {
+
+		Combat->FireButtonPressed(false);
 	}
 }
 
