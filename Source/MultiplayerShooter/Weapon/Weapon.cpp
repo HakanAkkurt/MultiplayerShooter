@@ -6,6 +6,8 @@
 #include "Components/WidgetComponent.h"
 #include "MultiplayerShooter/Character/PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Animation/AnimationAsset.h"
+#include "Components/SkeletalMeshComponent.h"
 
 
 // Sets default values
@@ -120,6 +122,14 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 	if (PickupWidget) {
 
 		PickupWidget->SetVisibility(bShowWidget);
+	}
+}
+
+void AWeapon::Fire()
+{
+	if (FireAnimation) {
+
+		WeaponMesh->PlayAnimation(FireAnimation, false);
 	}
 }
 
