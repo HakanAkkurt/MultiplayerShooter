@@ -11,7 +11,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
-#include "MultiplayerShooter/HUD/MS_HUD.h"
 #include "Camera/CameraComponent.h"
 
 // Sets default values for this component's properties
@@ -78,7 +77,6 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 
 		if (HUD) {
 
-			FHUDPackage HUDPackage;
 			if (EquippedWeapon) {
 
 				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
@@ -227,6 +225,12 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 
 		FVector Start = CrosshairWorldPosition;
 
+		if (Character) {
+
+			float DistanceToCharacter = (Character->GetActorLocation() - Start).Size();
+			Start += CrosshairWorldDirection * (DistanceToCharacter + 100.f);
+		}
+
 		FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
 
 		GetWorld()->LineTraceSingleByChannel(
@@ -238,6 +242,14 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 
 		if (!TraceHitResult.bBlockingHit) {
 			TraceHitResult.ImpactPoint = End;
+		}
+
+		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>()) {
+
+			HUDPackage.CrosshairsColor = FLinearColor::Red;
+		}
+		else {
+			HUDPackage.CrosshairsColor = FLinearColor::White;
 		}
 	}
 }

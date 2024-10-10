@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "MultiplayerShooter/Types/TurnInPlace.h"
+#include "MultiplayerShooter/Interfaces/InteractWithCrosshairsInterface.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
-class MULTIPLAYERSHOOTER_API APlayerCharacter : public ACharacter
+class MULTIPLAYERSHOOTER_API APlayerCharacter : public ACharacter, public IInteractWithCrosshairsInterface
 {
 	GENERATED_BODY()
 
@@ -85,6 +86,11 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* FireWeaponMontage;
+
+	void HideCamereIfCharacterClose();
+
+	UPROPERTY(EditAnywhere)
+	float CameraThreshold = 200.f;
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
