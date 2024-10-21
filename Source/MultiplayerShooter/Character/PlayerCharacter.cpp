@@ -12,6 +12,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerCharacterAnimInstance.h"
+#include "MultiplayerShooter/MultiplayerShooter.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -40,6 +41,8 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	
+	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 850.f, 0.f);
@@ -96,6 +99,20 @@ void APlayerCharacter::PlayFireMontage(bool bAiming)
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		FName SectionName;
 		SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void APlayerCharacter::PlayHitReactMontage()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && HitReactMontage) {
+
+		AnimInstance->Montage_Play(HitReactMontage);
+		FName SectionName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -303,6 +320,11 @@ void APlayerCharacter::TurnInPlace(float DeltaTime)
 			StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		}
 	}
+}
+
+void APlayerCharacter::MulticastHit_Implementation()
+{
+	PlayHitReactMontage();
 }
 
 void APlayerCharacter::HideCamereIfCharacterClose()
