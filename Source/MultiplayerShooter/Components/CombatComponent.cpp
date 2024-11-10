@@ -12,6 +12,7 @@
 #include "DrawDebugHelpers.h"
 #include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
 #include "Camera/CameraComponent.h"
+#include "TimerManager.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
@@ -153,6 +154,26 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 	}
 }
 
+void UCombatComponent::StartFireTimer()
+{
+	if (EquippedWeapon == nullptr || Character == nullptr) return;
+	
+	Character->GetWorldTimerManager().SetTimer(FireTimer, this,
+		&UCombatComponent::FireTimerFinished, EquippedWeapon->FireDelay);
+
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	if (EquippedWeapon == nullptr) return;
+
+	bCanFire = true;
+	if (bFireButtonPressed && EquippedWeapon->bAutomatic) {
+
+		Fire();
+	}
+}
+
 void UCombatComponent::SetAiming(bool bIsAiming)
 {
 	bAiming = bIsAiming;
@@ -189,17 +210,23 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
 
-	if (bFireButtonPressed) {
+	if (EquippedWeapon && bFireButtonPressed) {
 
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
+		Fire();
+	}
+}
 
-		ServerFire(HitResult.ImpactPoint);
+void UCombatComponent::Fire()
+{
+	if (bCanFire) {
 
+		bCanFire = false;
+		ServerFire(HitTarget);
 		if (EquippedWeapon) {
 
 			CrosshairShootingFactor = 0.75f;
 		}
+		StartFireTimer();
 	}
 }
 
