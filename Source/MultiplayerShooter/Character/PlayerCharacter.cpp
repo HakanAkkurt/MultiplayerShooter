@@ -13,6 +13,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerCharacterAnimInstance.h"
 #include "MultiplayerShooter/MultiplayerShooter.h"
+#include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -59,6 +60,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(APlayerCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(APlayerCharacter, Health);
 }
 
 // Called when the game starts or when spawned
@@ -66,6 +68,11 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	MS_PlayerController = Cast<AMS_PlayerController>(Controller);
+	if (MS_PlayerController) {
+
+		MS_PlayerController->SetHUDHealth(Health, MaxHealth);
+	}
 }
 
 // Called every frame
@@ -347,6 +354,10 @@ void APlayerCharacter::HideCamereIfCharacterClose()
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
+}
+
+void APlayerCharacter::OnRep_Health()
+{
 }
 
 void APlayerCharacter::SetOverlappingWeapon(AWeapon* Weapon)
