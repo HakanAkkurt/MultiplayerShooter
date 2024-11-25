@@ -68,10 +68,10 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	MS_PlayerController = Cast<AMS_PlayerController>(Controller);
-	if (MS_PlayerController) {
+	UpdateHUDHealth();
 
-		MS_PlayerController->SetHUDHealth(Health, MaxHealth);
+	if (HasAuthority()) {
+		OnTakeAnyDamage.AddDynamic(this, &APlayerCharacter::ReceiveDamage);
 	}
 }
 
@@ -122,6 +122,13 @@ void APlayerCharacter::PlayHitReactMontage()
 		FName SectionName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
+}
+
+void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UpdateHUDHealth();
+	PlayHitReactMontage();
 }
 
 // Called to bind functionality to input
@@ -329,11 +336,6 @@ void APlayerCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
-void APlayerCharacter::MulticastHit_Implementation()
-{
-	PlayHitReactMontage();
-}
-
 void APlayerCharacter::HideCamereIfCharacterClose()
 {
 	if (!IsLocallyControlled()) return;
@@ -358,6 +360,17 @@ void APlayerCharacter::HideCamereIfCharacterClose()
 
 void APlayerCharacter::OnRep_Health()
 {
+	UpdateHUDHealth();
+	PlayHitReactMontage();
+}
+
+void APlayerCharacter::UpdateHUDHealth()
+{
+	MS_PlayerController = MS_PlayerController == nullptr ? Cast<AMS_PlayerController>(Controller) : MS_PlayerController;
+	if (MS_PlayerController) {
+
+		MS_PlayerController->SetHUDHealth(Health, MaxHealth);
+	}
 }
 
 void APlayerCharacter::SetOverlappingWeapon(AWeapon* Weapon)
