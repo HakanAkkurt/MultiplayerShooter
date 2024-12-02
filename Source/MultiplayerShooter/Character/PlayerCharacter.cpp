@@ -14,6 +14,8 @@
 #include "PlayerCharacterAnimInstance.h"
 #include "MultiplayerShooter/MultiplayerShooter.h"
 #include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
+#include "MultiplayerShooter/GameMode/MS_GameMode.h"
+
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -110,6 +112,22 @@ void APlayerCharacter::PlayFireMontage(bool bAiming)
 	}
 }
 
+void APlayerCharacter::PlayEliminateMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && EliminateMontage) {
+
+		AnimInstance->Montage_Play(EliminateMontage);
+	}
+}
+
+void APlayerCharacter::Eliminate_Implementation()
+{
+	bEliminated = true;
+	PlayEliminateMontage();
+}
+
 void APlayerCharacter::PlayHitReactMontage()
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
@@ -129,6 +147,17 @@ void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const U
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUDHealth();
 	PlayHitReactMontage();
+
+	if (Health == 0.f) {
+
+		AMS_GameMode* MS_GameMode = GetWorld()->GetAuthGameMode<AMS_GameMode>();
+		if (MS_GameMode) {
+
+			MS_PlayerController = MS_PlayerController == nullptr ? Cast<AMS_PlayerController>(Controller) : MS_PlayerController;
+			AMS_PlayerController* AttackerController = Cast<AMS_PlayerController>(InstigatorController);
+			MS_GameMode->PlayerEliminated(this, MS_PlayerController, AttackerController);
+		}
+	}
 }
 
 // Called to bind functionality to input

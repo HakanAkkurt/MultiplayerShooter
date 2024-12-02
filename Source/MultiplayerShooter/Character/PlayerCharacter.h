@@ -29,6 +29,11 @@ public:
 
 	void PlayFireMontage(bool bAiming);
 
+	void PlayEliminateMontage();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Eliminate();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -97,6 +102,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* EliminateMontage;
+
 	void HideCamereIfCharacterClose();
 
 	UPROPERTY(EditAnywhere)
@@ -115,6 +123,8 @@ private:
 
 	class AMS_PlayerController* MS_PlayerController;
 
+	bool bEliminated = false;
+
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
@@ -130,4 +140,6 @@ public:
 	FVector GetHitTarget() const;
 
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	FORCEINLINE bool IsEliminated() const { return bEliminated; }
 };

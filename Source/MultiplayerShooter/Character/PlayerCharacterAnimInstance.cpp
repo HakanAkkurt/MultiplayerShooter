@@ -43,6 +43,8 @@ void UPlayerCharacterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 
 	TurningInPlace = PlayerCharacter->GetTurningInPlace();
 
+	bEliminated = PlayerCharacter->IsEliminated();
+
 	// Offset Yaw for strafing
 	FRotator AimRotation = PlayerCharacter->GetBaseAimRotation();
 	FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(PlayerCharacter->GetVelocity());
