@@ -15,6 +15,7 @@
 #include "MultiplayerShooter/MultiplayerShooter.h"
 #include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
 #include "MultiplayerShooter/GameMode/MS_GameMode.h"
+#include "TimerManager.h"
 
 
 // Sets default values
@@ -122,10 +123,28 @@ void APlayerCharacter::PlayEliminateMontage()
 	}
 }
 
-void APlayerCharacter::Eliminate_Implementation()
+void APlayerCharacter::Eliminate()
+{
+	MulticastEliminate();
+
+	GetWorldTimerManager().SetTimer(EliminateTimer, this, &APlayerCharacter::EliminateTimerFinished,
+		EliminateDelay);
+}
+
+void APlayerCharacter::MulticastEliminate_Implementation()
 {
 	bEliminated = true;
 	PlayEliminateMontage();
+}
+
+
+void APlayerCharacter::EliminateTimerFinished()
+{
+	AMS_GameMode* MS_GameMode = GetWorld()->GetAuthGameMode<AMS_GameMode>();
+	if (MS_GameMode) {
+
+		MS_GameMode->RequestRespawn(this, Controller);
+	}
 }
 
 void APlayerCharacter::PlayHitReactMontage()

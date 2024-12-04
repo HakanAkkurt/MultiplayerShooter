@@ -31,8 +31,10 @@ public:
 
 	void PlayEliminateMontage();
 
-	UFUNCTION(NetMulticast, Reliable)
 	void Eliminate();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastEliminate();
 
 protected:
 	// Called when the game starts or when spawned
@@ -124,6 +126,13 @@ private:
 	class AMS_PlayerController* MS_PlayerController;
 
 	bool bEliminated = false;
+
+	FTimerHandle EliminateTimer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float EliminateDelay = 2.f;
+
+	void EliminateTimerFinished();
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);

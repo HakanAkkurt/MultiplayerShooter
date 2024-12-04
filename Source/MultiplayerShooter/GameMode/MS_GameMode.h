@@ -17,5 +17,7 @@ class MULTIPLAYERSHOOTER_API AMS_GameMode : public AGameMode
 public:
 	virtual void PlayerEliminated(class APlayerCharacter* EliminatedCharacter, class APlayerController* VictimController,
 		class APlayerController* AttackerController);
+
+	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
 	
 };
