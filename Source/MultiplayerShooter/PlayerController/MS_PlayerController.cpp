@@ -6,6 +6,7 @@
 #include "MultiplayerShooter/HUD/CharacterOverlay.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "MultiplayerShooter/Character/PlayerCharacter.h"
 
 void AMS_PlayerController::BeginPlay()
 {
@@ -26,5 +27,16 @@ void AMS_PlayerController::SetHUDHealth(float Health, float MaxHealth)
 
 		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
 		MS_HUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
+	}
+}
+
+void AMS_PlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(InPawn);
+	if (PlayerCharacter) {
+
+		SetHUDHealth(PlayerCharacter->GetHealth(), PlayerCharacter->GetMaxHealth());
 	}
 }

@@ -125,6 +125,10 @@ void APlayerCharacter::PlayEliminateMontage()
 
 void APlayerCharacter::Eliminate()
 {
+	if (Combat && Combat->EquippedWeapon) {
+		Combat->EquippedWeapon->Dropped();
+	}
+
 	MulticastEliminate();
 
 	GetWorldTimerManager().SetTimer(EliminateTimer, this, &APlayerCharacter::EliminateTimerFinished,
@@ -135,6 +139,19 @@ void APlayerCharacter::MulticastEliminate_Implementation()
 {
 	bEliminated = true;
 	PlayEliminateMontage();
+
+	// Disable character movement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (MS_PlayerController) {
+
+		DisableInput(MS_PlayerController);
+	}
+
+	// Disable collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 }
 
 

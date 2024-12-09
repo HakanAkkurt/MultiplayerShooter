@@ -15,12 +15,14 @@ class MULTIPLAYERSHOOTER_API AMS_PlayerController : public APlayerController
 	GENERATED_BODY()
 
 
-private:
-	class AMS_HUD* MS_HUD;
+public:
+	void SetHUDHealth(float Health, float MaxHealth);
+	virtual void OnPossess(APawn* InPawn) override;
 
 protected:
 	virtual void BeginPlay() override;
 
-public:
-	void SetHUDHealth(float Health, float MaxHealth);
+private:
+	class AMS_HUD* MS_HUD;
+
 };
