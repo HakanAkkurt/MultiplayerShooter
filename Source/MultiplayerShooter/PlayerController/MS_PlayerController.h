@@ -17,6 +17,7 @@ class MULTIPLAYERSHOOTER_API AMS_PlayerController : public APlayerController
 
 public:
 	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDScore(float Score);
 	virtual void OnPossess(APawn* InPawn) override;
 
 protected:

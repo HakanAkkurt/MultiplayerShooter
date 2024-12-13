@@ -67,6 +67,9 @@ protected:
 
 	void UpdateHUDHealth();
 
+	// Poll for any relevant classes and initialize our HUD
+	void PollInit();
+
 private:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -133,6 +136,8 @@ private:
 	float EliminateDelay = 2.f;
 
 	void EliminateTimerFinished();
+
+	class AMS_PlayerState* MS_PlayerState;
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);

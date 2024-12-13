@@ -16,6 +16,7 @@
 #include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
 #include "MultiplayerShooter/GameMode/MS_GameMode.h"
 #include "TimerManager.h"
+#include "MultiplayerShooter/PlayerState/MS_PlayerState.h"
 
 
 // Sets default values
@@ -86,6 +87,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 	AimOffset(DeltaTime);
 
 	HideCamereIfCharacterClose();
+
+	PollInit();
 }
 
 
@@ -435,6 +438,18 @@ void APlayerCharacter::UpdateHUDHealth()
 	if (MS_PlayerController) {
 
 		MS_PlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void APlayerCharacter::PollInit()
+{
+	if (MS_PlayerState == nullptr) {
+
+		MS_PlayerState = GetPlayerState<AMS_PlayerState>();
+		if (MS_PlayerState) {
+
+			MS_PlayerState->AddToScore(0.f);
+		}
 	}
 }
 

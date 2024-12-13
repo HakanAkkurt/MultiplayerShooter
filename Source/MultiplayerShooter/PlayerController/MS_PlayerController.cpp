@@ -30,6 +30,16 @@ void AMS_PlayerController::SetHUDHealth(float Health, float MaxHealth)
 	}
 }
 
+void AMS_PlayerController::SetHUDScore(float Score)
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+	if (MS_HUD && MS_HUD->CharacterOverlay && MS_HUD->CharacterOverlay->ScoreAmount) {
+
+		FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
+		MS_HUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(ScoreText));
+	}
+}
+
 void AMS_PlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
