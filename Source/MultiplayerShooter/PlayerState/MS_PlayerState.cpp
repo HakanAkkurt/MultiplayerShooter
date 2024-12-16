@@ -4,20 +4,14 @@
 #include "MS_PlayerState.h"
 #include "MultiplayerShooter/Character/PlayerCharacter.h"
 #include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
+#include "Net/UnrealNetwork.h"
 
-void AMS_PlayerState::AddToScore(float ScoreAmount)
+
+void AMS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	SetScore(GetScore() + ScoreAmount);
-	Character = Character == nullptr ? Cast<APlayerCharacter>(GetPawn()) : Character;
-	if (Character) {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-		Controller = Controller == nullptr ? Cast<AMS_PlayerController>(Character->Controller) : Controller;
-		if (Controller) {
-
-			Controller->SetHUDScore(GetScore());
-		}
-
-	}
+	DOREPLIFETIME(AMS_PlayerState, Defeats);
 }
 
 void AMS_PlayerState::OnRep_Score()
@@ -35,5 +29,50 @@ void AMS_PlayerState::OnRep_Score()
 		}
 
 	}
-
 }
+
+void AMS_PlayerState::OnRep_Defeats()
+{
+	Character = Character == nullptr ? Cast<APlayerCharacter>(GetPawn()) : Character;
+	if (Character) {
+
+		Controller = Controller == nullptr ? Cast<AMS_PlayerController>(Character->Controller) : Controller;
+		if (Controller) {
+
+			Controller->SetHUDDefeats(Defeats);
+		}
+
+	}
+}
+
+
+void AMS_PlayerState::AddToScore(float ScoreAmount)
+{
+	SetScore(GetScore() + ScoreAmount);
+	Character = Character == nullptr ? Cast<APlayerCharacter>(GetPawn()) : Character;
+	if (Character) {
+
+		Controller = Controller == nullptr ? Cast<AMS_PlayerController>(Character->Controller) : Controller;
+		if (Controller) {
+
+			Controller->SetHUDScore(GetScore());
+		}
+
+	}
+}
+
+void AMS_PlayerState::AddToDefeats(int32 DefeatsAmount)
+{
+	Defeats += DefeatsAmount;
+	Character = Character == nullptr ? Cast<APlayerCharacter>(GetPawn()) : Character;
+	if (Character) {
+
+		Controller = Controller == nullptr ? Cast<AMS_PlayerController>(Character->Controller) : Controller;
+		if (Controller) {
+
+			Controller->SetHUDDefeats(Defeats);
+		}
+
+	}
+}
+

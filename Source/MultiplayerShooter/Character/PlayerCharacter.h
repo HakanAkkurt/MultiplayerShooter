@@ -126,6 +126,7 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
+	UPROPERTY()
 	class AMS_PlayerController* MS_PlayerController;
 
 	bool bEliminated = false;
@@ -137,6 +138,7 @@ private:
 
 	void EliminateTimerFinished();
 
+	UPROPERTY()
 	class AMS_PlayerState* MS_PlayerState;
 
 public:	

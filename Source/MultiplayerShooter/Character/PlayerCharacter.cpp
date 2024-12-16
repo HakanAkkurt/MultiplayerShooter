@@ -449,6 +449,7 @@ void APlayerCharacter::PollInit()
 		if (MS_PlayerState) {
 
 			MS_PlayerState->AddToScore(0.f);
+			MS_PlayerState->AddToDefeats(0);
 		}
 	}
 }

@@ -55,8 +55,11 @@ protected:
 
 private:
 
+	UPROPERTY()
 	class APlayerCharacter* Character;
+	UPROPERTY()
 	class AMS_PlayerController* Controller;
+	UPROPERTY()
 	class AMS_HUD* HUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)

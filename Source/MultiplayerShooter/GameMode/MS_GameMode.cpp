@@ -18,6 +18,11 @@ void AMS_GameMode::PlayerEliminated(APlayerCharacter* EliminatedCharacter, APlay
 		AttackerPlayerState->AddToScore(1.f);
 	}
 
+	if (VictimPlayerState) {
+
+		VictimPlayerState->AddToDefeats(1);
+	}
+
 	if (EliminatedCharacter) {
 
 		EliminatedCharacter->Eliminate();

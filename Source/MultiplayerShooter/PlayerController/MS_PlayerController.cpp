@@ -40,6 +40,16 @@ void AMS_PlayerController::SetHUDScore(float Score)
 	}
 }
 
+void AMS_PlayerController::SetHUDDefeats(int32 Defeats)
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+	if (MS_HUD && MS_HUD->CharacterOverlay && MS_HUD->CharacterOverlay->DefeatsAmount) {
+
+		FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
+		MS_HUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsText));
+	}
+}
+
 void AMS_PlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
