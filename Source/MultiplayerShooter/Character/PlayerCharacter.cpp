@@ -140,6 +140,11 @@ void APlayerCharacter::Eliminate()
 
 void APlayerCharacter::MulticastEliminate_Implementation()
 {
+	if (MS_PlayerController) {
+	
+		MS_PlayerController->SetHUDWeaponAmmo(0);
+	}
+
 	bEliminated = true;
 	PlayEliminateMontage();
 

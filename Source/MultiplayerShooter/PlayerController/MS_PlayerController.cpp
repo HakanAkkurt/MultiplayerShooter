@@ -50,6 +50,16 @@ void AMS_PlayerController::SetHUDDefeats(int32 Defeats)
 	}
 }
 
+void AMS_PlayerController::SetHUDWeaponAmmo(int32 Ammo)
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+	if (MS_HUD && MS_HUD->CharacterOverlay && MS_HUD->CharacterOverlay->WeaponAmmoAmount) {
+
+		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
+		MS_HUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+}
+
 void AMS_PlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);

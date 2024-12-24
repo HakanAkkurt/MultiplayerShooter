@@ -10,7 +10,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Casing.h"
 #include "Engine/SkeletalMeshSocket.h"
-
+#include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
 
 // Sets default values
 AWeapon::AWeapon()
@@ -67,6 +67,7 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+	DOREPLIFETIME(AWeapon, Ammo);
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -112,6 +113,49 @@ void AWeapon::OnRep_WeaponState()
 	}
 }
 
+void AWeapon::SetHUDAmmo()
+{
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+	if (PlayerOwnerCharacter) {
+
+		PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AMS_PlayerController>(PlayerOwnerCharacter->Controller) : PlayerOwnerController;
+
+		if (PlayerOwnerController) {
+
+			PlayerOwnerController->SetHUDWeaponAmmo(Ammo);
+		}
+	}
+}
+
+void AWeapon::SpendRound()
+{
+	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
+
+	SetHUDAmmo();
+}
+
+
+void AWeapon::OnRep_Ammo()
+{
+	SetHUDAmmo();
+}
+
+void AWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+
+	if (Owner == nullptr) {
+
+		PlayerOwnerCharacter = nullptr;
+		PlayerOwnerController = nullptr;
+	}
+	else {
+
+		SetHUDAmmo();
+	}
+
+}
+
 void AWeapon::SetWeaponState(EWeaponState State)
 {
 	WeaponState = State;
@@ -142,10 +186,12 @@ void AWeapon::SetWeaponState(EWeaponState State)
 
 		break;
 	}
-
-
 }
 
+bool AWeapon::IsEmpty()
+{
+	return Ammo <= 0;
+}
 
 void AWeapon::ShowPickupWidget(bool bShowWidget)
 {
@@ -182,6 +228,7 @@ void AWeapon::Fire(const FVector& HitTarget)
 		}
 
 	}
+	SpendRound();
 }
 
 void AWeapon::Dropped()
@@ -191,6 +238,7 @@ void AWeapon::Dropped()
 	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
 	WeaponMesh->DetachFromComponent(DetachRules);
 	SetOwner(nullptr);
-
+	PlayerOwnerCharacter = nullptr;
+	PlayerOwnerController = nullptr;
 }
 
