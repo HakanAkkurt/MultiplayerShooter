@@ -17,6 +17,7 @@
 #include "MultiplayerShooter/GameMode/MS_GameMode.h"
 #include "TimerManager.h"
 #include "MultiplayerShooter/PlayerState/MS_PlayerState.h"
+#include "MultiplayerShooter/Weapon/WeaponTypes.h"
 
 
 // Sets default values
@@ -112,6 +113,28 @@ void APlayerCharacter::PlayFireMontage(bool bAiming)
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		FName SectionName;
 		SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void APlayerCharacter::PlayReloadMontage()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && ReloadMontage) {
+
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+
+		switch (Combat->EquippedWeapon->GetWeaponType()) {
+
+		case EWeaponType::EWT_AssaultRifle:
+
+			SectionName = FName("Rifle");
+			break;
+		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -225,6 +248,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &APlayerCharacter::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &APlayerCharacter::FireButtonReleased);
+
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &APlayerCharacter::ReloadButtonPressed);
 }
 
 void APlayerCharacter::MoveForward(float Value)
@@ -294,6 +319,13 @@ void APlayerCharacter::CrouchButtonPressed()
 		Crouch();
 	}
 
+}
+
+void APlayerCharacter::ReloadButtonPressed()
+{
+	if (Combat) {
+		Combat->Reload();
+	}
 }
 
 void APlayerCharacter::AimButtonPressed()
@@ -514,4 +546,11 @@ FVector APlayerCharacter::GetHitTarget() const
 {
 	if (Combat == nullptr) return FVector();
 	return Combat->HitTarget;
+}
+
+ECombatState APlayerCharacter::GetCombatState() const
+{
+	if (Combat == nullptr) return ECombatState::ECS_MAX;
+
+	return Combat->CombatState;
 }

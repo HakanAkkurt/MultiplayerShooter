@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "MultiplayerShooter/Weapon/Weapon.h"
+#include "MultiplayerShooter/Types/CombatState.h"
 
 void UPlayerCharacterAnimInstance::NativeInitializeAnimation()
 {
@@ -80,4 +81,6 @@ void UPlayerCharacterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 30.f);
 		}
 	}
+
+	bUseFABRIK = PlayerCharacter->GetCombatState() != ECombatState::ECS_Reloading;
 }

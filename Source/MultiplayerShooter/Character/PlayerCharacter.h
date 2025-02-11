@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "MultiplayerShooter/Types/TurnInPlace.h"
 #include "MultiplayerShooter/Interfaces/InteractWithCrosshairsInterface.h"
+#include "MultiplayerShooter/Types/CombatState.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
@@ -29,6 +30,8 @@ public:
 
 	void PlayFireMontage(bool bAiming);
 
+	void PlayReloadMontage();
+
 	void PlayEliminateMontage();
 
 	void Eliminate();
@@ -48,6 +51,8 @@ protected:
 	void EquipButtonPressed();
 
 	void CrouchButtonPressed();
+
+	void ReloadButtonPressed();
 
 	void AimButtonPressed();
 
@@ -87,7 +92,7 @@ private:
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
 
 	UFUNCTION(Server, Reliable)
@@ -101,8 +106,13 @@ private:
 	ETurningInPlace TurningInPlace;
 	void TurnInPlace(float DeltaTime);
 
+	// Animation montages
+
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* FireWeaponMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ReloadMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
@@ -161,4 +171,6 @@ public:
 
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+
+	ECombatState GetCombatState() const;
 };
