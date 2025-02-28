@@ -54,8 +54,6 @@ void AMS_HUD::DrawHUD()
 void AMS_HUD::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AddCharacterOverlay();
 }
 
 void AMS_HUD::AddCharacterOverlay()

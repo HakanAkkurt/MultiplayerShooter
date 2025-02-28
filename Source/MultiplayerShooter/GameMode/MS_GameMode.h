@@ -15,9 +15,21 @@ class MULTIPLAYERSHOOTER_API AMS_GameMode : public AGameMode
 	GENERATED_BODY()
 
 public:
-	virtual void PlayerEliminated(class APlayerCharacter* EliminatedCharacter, class APlayerController* VictimController,
-		class APlayerController* AttackerController);
+	AMS_GameMode();
 
+	virtual void Tick(float DeltaTime) override;
+	virtual void PlayerEliminated(class APlayerCharacter* EliminatedCharacter, class APlayerController* VictimController, class APlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
 	
+	UPROPERTY(EditDefaultsOnly)
+	float WarmupTime = 10.f;
+
+	float LevelStartingTime = 0.f;
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void OnMatchStateSet() override;
+
+private:
+	float CountdownTime = 0.f;
 };
