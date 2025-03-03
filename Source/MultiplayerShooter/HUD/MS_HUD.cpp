@@ -4,6 +4,7 @@
 #include "MS_HUD.h"
 #include "GameFramework/PlayerController.h"
 #include "CharacterOverlay.h"
+#include "Announcement.h"
 
 void AMS_HUD::DrawHUD()
 {
@@ -64,6 +65,17 @@ void AMS_HUD::AddCharacterOverlay()
 
 		CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
 		CharacterOverlay->AddToViewport();
+	}
+}
+
+void AMS_HUD::AddAnnouncement()
+{
+	APlayerController* PlayerController = GetOwningPlayerController();
+
+	if (PlayerController && AnnouncementClass) {
+
+		Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
+		Announcement->AddToViewport();
 	}
 }
 

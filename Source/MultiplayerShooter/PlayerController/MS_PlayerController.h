@@ -22,6 +22,7 @@ public:
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDMatchCountdown(float CountdownTime);
+	void SetHUDAnnouncementCountdown(float CountdownTime);
 
 	virtual void OnPossess(APawn* InPawn) override;
 
@@ -34,6 +35,8 @@ public:
 	virtual void ReceivedPlayer() override; // Synced with server clock as soon as possible
 
 	void OnMatchStateSet(FName State);
+
+	void HandleMatchHasStarted();
 
 protected:
 	virtual void BeginPlay() override;
@@ -61,11 +64,19 @@ protected:
 
 	void CheckTimeSync(float DeltaTime);
 
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
+
+	UFUNCTION(Client, Reliable)
+	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float StartingTime);
+
 private:
 	UPROPERTY()
 	class AMS_HUD* MS_HUD;
 
-	float MatchTime = 120.f;
+	float LevelStartingTime = 0.f;
+	float MatchTime = 0.f;
+	float WarmupTime = 0.f;
 	uint32 CountdownInt = 0;
 
 	UPROPERTY(ReplicatedUsing = OnRep_MatchState)

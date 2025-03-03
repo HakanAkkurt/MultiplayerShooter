@@ -9,12 +9,16 @@
 #include "MultiplayerShooter/Character/PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "MultiplayerShooter/GameMode/MS_GameMode.h"
+#include "MultiplayerShooter/HUD/Announcement.h"
+#include "Kismet/GameplayStatics.h"
 
 void AMS_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
 	MS_HUD = Cast<AMS_HUD>(GetHUD());
+
+	ServerCheckMatchState();
 }
 
 void AMS_PlayerController::Tick(float DeltaTime)
@@ -46,6 +50,37 @@ void AMS_PlayerController::CheckTimeSync(float DeltaTime)
 	}
 }
 
+void AMS_PlayerController::ServerCheckMatchState_Implementation()
+{
+	AMS_GameMode* GameMode = Cast<AMS_GameMode>(UGameplayStatics::GetGameMode(this));
+	if (GameMode) {
+
+		WarmupTime = GameMode->WarmupTime;
+		MatchTime = GameMode->MatchTime;
+		LevelStartingTime = GameMode->LevelStartingTime;
+		MatchState = GameMode->GetMatchState();
+
+		ClientJoinMidgame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+
+	}
+
+}
+
+void AMS_PlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime)
+{
+	WarmupTime = Warmup;
+	MatchTime = Match;
+	LevelStartingTime = StartingTime;
+	MatchState = StateOfMatch;
+
+	OnMatchStateSet(MatchState);
+
+	if (MS_HUD && MatchState == MatchState::WaitingToStart) {
+
+		MS_HUD->AddAnnouncement();
+	}
+}
+
 float AMS_PlayerController::GetServerTime()
 {
 	if (HasAuthority()) return GetWorld()->GetTimeSeconds();
@@ -67,11 +102,7 @@ void AMS_PlayerController::OnMatchStateSet(FName State)
 
 	if (MatchState == MatchState::InProgress) {
 
-		MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
-		if (MS_HUD) {
-
-			MS_HUD->AddCharacterOverlay();
-		}
+		HandleMatchHasStarted();
 	}
 }
 
@@ -79,21 +110,41 @@ void AMS_PlayerController::OnRep_MatchState()
 {
 	if (MatchState == MatchState::InProgress) {
 
-		MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
-		if (MS_HUD) {
+		HandleMatchHasStarted();
+	}
+}
 
-			MS_HUD->AddCharacterOverlay();
+void AMS_PlayerController::HandleMatchHasStarted()
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+	if (MS_HUD) {
+
+		MS_HUD->AddCharacterOverlay();
+
+		if (MS_HUD->Announcement) {
+			MS_HUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 }
 
 void AMS_PlayerController::SetHUDTime()
 {
-	uint32 SecondsLeft = FMath::CeilToInt(MatchTime - GetServerTime());
+	float TimeLeft = 0.f;
+	if (MatchState == MatchState::WaitingToStart) TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
+	else if (MatchState == MatchState::InProgress) TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
+
+	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
 
 	if (CountdownInt != SecondsLeft) {
 
-		SetHUDMatchCountdown(MatchTime - GetServerTime());
+		if (MatchState == MatchState::WaitingToStart) {
+
+			SetHUDAnnouncementCountdown(TimeLeft);
+		}
+		if (MatchState == MatchState::InProgress) {
+
+			SetHUDMatchCountdown(TimeLeft);
+		}
 	}
 	CountdownInt = SecondsLeft;
 }
@@ -222,6 +273,21 @@ void AMS_PlayerController::SetHUDMatchCountdown(float CountdownTime)
 
 		FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
 		MS_HUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
+	}
+}
+
+void AMS_PlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+	if (MS_HUD
+		&& MS_HUD->Announcement
+		&& MS_HUD->Announcement->WarmupTime) {
+
+		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+		int32 Seconds = CountdownTime - Minutes * 60;
+
+		FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		MS_HUD->Announcement->WarmupTime->SetText(FText::FromString(CountdownText));
 	}
 }
 
