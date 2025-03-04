@@ -57,19 +57,21 @@ void AMS_PlayerController::ServerCheckMatchState_Implementation()
 
 		WarmupTime = GameMode->WarmupTime;
 		MatchTime = GameMode->MatchTime;
+		CooldownTime = GameMode->CooldownTime;
 		LevelStartingTime = GameMode->LevelStartingTime;
 		MatchState = GameMode->GetMatchState();
 
-		ClientJoinMidgame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+		ClientJoinMidgame(MatchState, WarmupTime, MatchTime, CooldownTime, LevelStartingTime);
 
 	}
 
 }
 
-void AMS_PlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime)
+void AMS_PlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime)
 {
 	WarmupTime = Warmup;
 	MatchTime = Match;
+	CooldownTime = Cooldown;
 	LevelStartingTime = StartingTime;
 	MatchState = StateOfMatch;
 
@@ -104,6 +106,10 @@ void AMS_PlayerController::OnMatchStateSet(FName State)
 
 		HandleMatchHasStarted();
 	}
+	else if (MatchState == MatchState::Cooldown) {
+		
+		HandleCooldown();
+	}
 }
 
 void AMS_PlayerController::OnRep_MatchState()
@@ -111,6 +117,10 @@ void AMS_PlayerController::OnRep_MatchState()
 	if (MatchState == MatchState::InProgress) {
 
 		HandleMatchHasStarted();
+	}
+	else if (MatchState == MatchState::Cooldown) {
+
+		HandleCooldown();
 	}
 }
 
@@ -127,17 +137,48 @@ void AMS_PlayerController::HandleMatchHasStarted()
 	}
 }
 
+void AMS_PlayerController::HandleCooldown()
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+	if (MS_HUD) {
+
+		MS_HUD->CharacterOverlay->RemoveFromParent();
+
+		if (MS_HUD->Announcement
+			&& MS_HUD->Announcement->AnnouncementText
+			&& MS_HUD->Announcement->InfoText) {
+
+			MS_HUD->Announcement->SetVisibility(ESlateVisibility::Visible);
+
+			FString AnnouncementText("New match starts in:");
+			MS_HUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
+
+			MS_HUD->Announcement->InfoText->SetText(FText());
+
+		}
+	}
+}
+
 void AMS_PlayerController::SetHUDTime()
 {
 	float TimeLeft = 0.f;
 	if (MatchState == MatchState::WaitingToStart) TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
 	else if (MatchState == MatchState::InProgress) TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
-
+	else if (MatchState == MatchState::Cooldown) TimeLeft = CooldownTime + WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
 	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
+
+	if (HasAuthority()) {
+
+		MS_GameMode = MS_GameMode == nullptr ? Cast<AMS_GameMode>(UGameplayStatics::GetGameMode(this)) : MS_GameMode;
+		if (MS_GameMode) {
+
+			SecondsLeft = FMath::CeilToInt(MS_GameMode->GetCountdownTime() + LevelStartingTime);
+		}
+	}
 
 	if (CountdownInt != SecondsLeft) {
 
-		if (MatchState == MatchState::WaitingToStart) {
+		if (MatchState == MatchState::WaitingToStart || MatchState == MatchState::Cooldown) {
 
 			SetHUDAnnouncementCountdown(TimeLeft);
 		}
@@ -268,6 +309,12 @@ void AMS_PlayerController::SetHUDMatchCountdown(float CountdownTime)
 		&& MS_HUD->CharacterOverlay
 		&& MS_HUD->CharacterOverlay->MatchCountdownText) {
 
+		if (CountdownTime < 0.f) {
+			MS_HUD->CharacterOverlay->MatchCountdownText->SetText(FText());
+
+			return;
+		}
+
 		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		int32 Seconds = CountdownTime - Minutes * 60;
 
@@ -282,6 +329,12 @@ void AMS_PlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 	if (MS_HUD
 		&& MS_HUD->Announcement
 		&& MS_HUD->Announcement->WarmupTime) {
+
+		if (CountdownTime < 0.f) {
+			MS_HUD->Announcement->WarmupTime->SetText(FText());
+
+			return;
+		}
 
 		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		int32 Seconds = CountdownTime - Minutes * 60;

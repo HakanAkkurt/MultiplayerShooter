@@ -8,6 +8,11 @@
 #include "GameFramework/PlayerStart.h"
 #include "MultiplayerShooter/PlayerState/MS_PlayerState.h"
 
+namespace MatchState
+{
+	const FName Cooldown = FName("Cooldown");
+}
+
 AMS_GameMode::AMS_GameMode()
 {
 	bDelayedStart = true;
@@ -45,6 +50,18 @@ void AMS_GameMode::Tick(float DeltaTime)
 
 			StartMatch();
 		}
+	}
+	else if (MatchState == MatchState::InProgress) {
+
+		CountdownTime = WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime <= 0.f) {
+
+			SetMatchState(MatchState::Cooldown);
+		}
+	}
+	else if (MatchState == MatchState::Cooldown) {
+
+		CountdownTime = CooldownTime + WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
 	}
 }
 
