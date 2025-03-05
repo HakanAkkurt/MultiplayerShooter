@@ -66,6 +66,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME_CONDITION(APlayerCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(APlayerCharacter, Health);
+	DOREPLIFETIME(APlayerCharacter, bDisableGameplay);
 }
 
 // Called when the game starts or when spawned
@@ -85,13 +86,26 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	AimOffset(DeltaTime);
+	RotateInPlace(DeltaTime);
 
 	HideCamereIfCharacterClose();
 
 	PollInit();
 }
 
+void APlayerCharacter::RotateInPlace(float DeltaTime)
+{
+	if (bDisableGameplay) {
+
+		bUseControllerRotationYaw = false;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+
+		return;
+	}
+
+	// .... 
+	AimOffset(DeltaTime);
+}
 
 void APlayerCharacter::PostInitializeComponents()
 {
@@ -161,6 +175,16 @@ void APlayerCharacter::Eliminate()
 		EliminateDelay);
 }
 
+void APlayerCharacter::Destroyed()
+{
+	Super::Destroyed();
+
+	if (Combat && Combat->EquippedWeapon) {
+
+		Combat->EquippedWeapon->Destroy();
+	}
+}
+
 void APlayerCharacter::MulticastEliminate_Implementation()
 {
 	if (MS_PlayerController) {
@@ -171,13 +195,7 @@ void APlayerCharacter::MulticastEliminate_Implementation()
 	bEliminated = true;
 	PlayEliminateMontage();
 
-	// Disable character movement
-	GetCharacterMovement()->DisableMovement();
-	GetCharacterMovement()->StopMovementImmediately();
-	if (MS_PlayerController) {
-
-		DisableInput(MS_PlayerController);
-	}
+	bDisableGameplay = true;
 
 	// Disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -254,6 +272,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::MoveForward(float Value)
 {
+	if (bDisableGameplay) return;
+
 	if (Controller != nullptr && Value != 0.f) {
 
 		const FRotator YawRotaion(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -265,6 +285,8 @@ void APlayerCharacter::MoveForward(float Value)
 
 void APlayerCharacter::MoveRight(float Value)
 {
+	if (bDisableGameplay) return;
+
 	if (Controller != nullptr && Value != 0.f) {
 
 		const FRotator YawRotaion(0.f, Controller->GetControlRotation().Yaw, 0.f);
@@ -286,6 +308,8 @@ void APlayerCharacter::LookUp(float Value)
 
 void APlayerCharacter::EquipButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat) {
 
 		if (HasAuthority()) {
@@ -311,6 +335,8 @@ void APlayerCharacter::ServerEquipButtonPressed_Implementation()
 
 void APlayerCharacter::CrouchButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (bIsCrouched) {
 
 		UnCrouch();
@@ -323,6 +349,8 @@ void APlayerCharacter::CrouchButtonPressed()
 
 void APlayerCharacter::ReloadButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat) {
 		Combat->Reload();
 	}
@@ -330,6 +358,8 @@ void APlayerCharacter::ReloadButtonPressed()
 
 void APlayerCharacter::AimButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat) {
 
 		Combat->SetAiming(true);
@@ -338,6 +368,8 @@ void APlayerCharacter::AimButtonPressed()
 
 void APlayerCharacter::AimButtonReleased()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat) {
 
 		Combat->SetAiming(false);
@@ -390,6 +422,8 @@ void APlayerCharacter::AimOffset(float DeltaTime)
 
 void APlayerCharacter::Jump()
 {
+	if (bDisableGameplay) return;
+
 	if (bIsCrouched) {
 
 		UnCrouch();
@@ -402,6 +436,8 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::FireButtonPressed()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat) {
 
 		Combat->FireButtonPressed(true);
@@ -410,12 +446,13 @@ void APlayerCharacter::FireButtonPressed()
 
 void APlayerCharacter::FireButtonReleased()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat) {
 
 		Combat->FireButtonPressed(false);
 	}
 }
-
 
 void APlayerCharacter::TurnInPlace(float DeltaTime)
 {

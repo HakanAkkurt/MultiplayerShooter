@@ -11,6 +11,7 @@
 #include "MultiplayerShooter/GameMode/MS_GameMode.h"
 #include "MultiplayerShooter/HUD/Announcement.h"
 #include "Kismet/GameplayStatics.h"
+#include "MultiplayerShooter/Components/CombatComponent.h"
 
 void AMS_PlayerController::BeginPlay()
 {
@@ -156,6 +157,14 @@ void AMS_PlayerController::HandleCooldown()
 			MS_HUD->Announcement->InfoText->SetText(FText());
 
 		}
+	}
+
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
+
+	if (PlayerCharacter && PlayerCharacter->GetCombat()) {
+
+		PlayerCharacter->bDisableGameplay = true;
+		PlayerCharacter->GetCombat()->FireButtonPressed(false);
 	}
 }
 
