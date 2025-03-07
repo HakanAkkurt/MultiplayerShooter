@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
 #include "MultiplayerShooter/PlayerState/MS_PlayerState.h"
+#include "MultiplayerShooter/GameState/MS_GameState.h"
 
 namespace MatchState
 {
@@ -71,12 +72,19 @@ void AMS_GameMode::Tick(float DeltaTime)
 
 void AMS_GameMode::PlayerEliminated(APlayerCharacter* EliminatedCharacter, APlayerController* VictimController, APlayerController* AttackerController)
 {
+	if (AttackerController == nullptr || AttackerController->PlayerState == nullptr) return;
+	if (VictimController == nullptr || VictimController->PlayerState == nullptr) return;
+
 	AMS_PlayerState* AttackerPlayerState = AttackerController ? Cast<AMS_PlayerState>(AttackerController->PlayerState) : nullptr;
 	AMS_PlayerState* VictimPlayerState = VictimController ? Cast<AMS_PlayerState>(VictimController->PlayerState) : nullptr;
 
-	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState) {
+	AMS_GameState* MS_GameState = GetGameState<AMS_GameState>();
+
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && MS_GameState) {
 
 		AttackerPlayerState->AddToScore(1.f);
+
+		MS_GameState->UpdateTopScore(AttackerPlayerState);
 	}
 
 	if (VictimPlayerState) {

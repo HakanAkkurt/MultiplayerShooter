@@ -18,6 +18,7 @@
 #include "TimerManager.h"
 #include "MultiplayerShooter/PlayerState/MS_PlayerState.h"
 #include "MultiplayerShooter/Weapon/WeaponTypes.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -179,7 +180,10 @@ void APlayerCharacter::Destroyed()
 {
 	Super::Destroyed();
 
-	if (Combat && Combat->EquippedWeapon) {
+	AMS_GameMode* MS_GameMode = Cast<AMS_GameMode>(UGameplayStatics::GetGameMode(this));
+	bool bMatchNotInProgress = MS_GameMode && MS_GameMode->GetMatchState() != MatchState::InProgress;
+
+	if (Combat && Combat->EquippedWeapon && bMatchNotInProgress) {
 
 		Combat->EquippedWeapon->Destroy();
 	}
@@ -195,7 +199,13 @@ void APlayerCharacter::MulticastEliminate_Implementation()
 	bEliminated = true;
 	PlayEliminateMontage();
 
+	// Disable character movement
 	bDisableGameplay = true;
+
+	if (Combat) {
+
+		Combat->FireButtonPressed(false);
+	}
 
 	// Disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
