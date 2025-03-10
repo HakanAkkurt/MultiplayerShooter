@@ -201,6 +201,7 @@ void APlayerCharacter::MulticastEliminate_Implementation()
 
 	// Disable character movement
 	bDisableGameplay = true;
+	GetCharacterMovement()->DisableMovement();
 
 	if (Combat) {
 

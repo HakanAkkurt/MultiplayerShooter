@@ -132,7 +132,7 @@ void AMS_PlayerController::HandleMatchHasStarted()
 	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
 	if (MS_HUD) {
 
-		MS_HUD->AddCharacterOverlay();
+		if (MS_HUD->CharacterOverlay == nullptr) MS_HUD->AddCharacterOverlay();
 
 		if (MS_HUD->Announcement) {
 			MS_HUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
