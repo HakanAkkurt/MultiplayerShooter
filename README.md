@@ -1,4 +1,4 @@
-# MultiplayerShooter developed with UE 5
+# MultiplayerShooter developed with Unreal Engine 5.5
 
 Assets from Marketplace:
 
