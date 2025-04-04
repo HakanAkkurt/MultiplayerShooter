@@ -25,4 +25,16 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* ImpactParticles;
+
+	UPROPERTY(EditAnywhere)
+	class UParticleSystem* BeamParticles;
+
+	UPROPERTY(EditAnywhere)
+	class UParticleSystem* MuzzleFlash;
+
+	UPROPERTY(EditAnywhere)
+	USoundCue* FireSound;
+
+	UPROPERTY(EditAnywhere)
+	USoundCue* HitSound;
 };
