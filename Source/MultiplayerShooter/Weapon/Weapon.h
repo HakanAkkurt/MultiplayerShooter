@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "WeaponTypes.h"
+#include "GameFramework/RotatingMovementComponent.h"
 #include "Weapon.generated.h"
 
 UENUM(BlueprintType)
@@ -78,6 +79,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* EquipSound;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	URotatingMovementComponent* RotatingComponent;
 
 protected:
 	// Called when the game starts or when spawned
