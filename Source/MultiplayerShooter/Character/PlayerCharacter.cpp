@@ -169,6 +169,11 @@ void APlayerCharacter::PlayReloadMontage()
 
 			SectionName = FName("Rifle");
 			break;
+
+		case EWeaponType::EWT_SniperRifle:
+
+			SectionName = FName("Rifle");
+			break;
 		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
@@ -232,6 +237,11 @@ void APlayerCharacter::MulticastEliminate_Implementation()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	if (IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedWeapon
+		&& Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle) {
+
+		ShowSniperScopeWidget(false);
+	}
 }
 
 
