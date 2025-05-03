@@ -9,6 +9,8 @@
 #include "Sound/SoundCue.h"
 #include "MultiplayerShooter/Character/PlayerCharacter.h"
 #include "MultiplayerShooter/MultiplayerShooter.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -52,11 +54,67 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimi
 	Destroy();
 }
 
+void AProjectile::SpawnTrailSystem()
+{
+	if (TrailSystem) {
+
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			TrailSystem,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false
+		);
+	}
+}
+
+void AProjectile::ExplodeDamage()
+{
+	APawn* FiringPawn = GetInstigator();
+	if (FiringPawn && HasAuthority()) {
+
+		AController* FiringController = FiringPawn->GetController();
+		if (FiringController) {
+
+			UGameplayStatics::ApplyRadialDamageWithFalloff(
+				this, // World context object
+				Damage, // BaseDamage
+				10.f, // MinimumDamage
+				GetActorLocation(), // Origin
+				DamageInnerRadius,
+				DamageOuterRadius,
+				1.f, // DamageFallof
+				UDamageType::StaticClass(), // DamageTypeClass
+				TArray<AActor*>(), // IgnoreActors
+				this, // DamageCauser
+				FiringController // InstigatorController
+			);
+		}
+	}
+}
+
 // Called every frame
 void AProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AProjectile::StartDestroyTimer()
+{
+	GetWorldTimerManager().SetTimer(
+		DestroyTimer,
+		this,
+		&AProjectile::DestroyTimerFinished,
+		DestroyTime
+	);
+}
+
+void AProjectile::DestroyTimerFinished()
+{
+	Destroy();
 }
 
 void AProjectile::Destroyed()
