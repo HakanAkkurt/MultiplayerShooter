@@ -34,6 +34,8 @@ public:
 
 	void PlayEliminateMontage();
 
+	void PlayThrowGrenadeMontage();
+
 	void Eliminate();
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -74,6 +76,8 @@ protected:
 	void FireButtonReleased();
 
 	void PlayHitReactMontage();
+
+	void GrenadeButtonPressed();
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
@@ -129,6 +133,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* EliminateMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ThrowGrenadeMontage;
 
 	void HideCamereIfCharacterClose();
 
@@ -187,4 +194,6 @@ public:
 	FORCEINLINE UCombatComponent* GetCombat() const { return Combat; }
 
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
+
+	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 };

@@ -194,6 +194,16 @@ void APlayerCharacter::PlayEliminateMontage()
 	}
 }
 
+void APlayerCharacter::PlayThrowGrenadeMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && ThrowGrenadeMontage) {
+
+		AnimInstance->Montage_Play(ThrowGrenadeMontage);
+	}
+}
+
 void APlayerCharacter::Eliminate()
 {
 	if (Combat && Combat->EquippedWeapon) {
@@ -273,6 +283,13 @@ void APlayerCharacter::PlayHitReactMontage()
 	}
 }
 
+void APlayerCharacter::GrenadeButtonPressed()
+{
+	if (Combat) {
+		Combat->ThrowGrenade();
+	}
+}
+
 void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
@@ -314,6 +331,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &APlayerCharacter::FireButtonReleased);
 
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &APlayerCharacter::ReloadButtonPressed);
+	
+	PlayerInputComponent->BindAction("ThrowGrenade", IE_Pressed, this, &APlayerCharacter::GrenadeButtonPressed);
+
 }
 
 void APlayerCharacter::MoveForward(float Value)

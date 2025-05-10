@@ -11,6 +11,7 @@
 #include "Casing.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
+#include "MultiplayerShooter/Components/CombatComponent.h"
 
 // Sets default values
 AWeapon::AWeapon()
@@ -28,6 +29,10 @@ AWeapon::AWeapon()
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
+	WeaponMesh->MarkRenderStateDirty();
+	EnableCustomDepth(true);
+
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
 	AreaSphere->SetupAttachment(RootComponent);
 	AreaSphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -39,6 +44,13 @@ AWeapon::AWeapon()
 	RotatingComponent = CreateDefaultSubobject<URotatingMovementComponent>(TEXT("RotatingComponent"));
 	RotatingComponent->RotationRate = FRotator(0.f, 90.f, 0.f);
 
+}
+
+void AWeapon::EnableCustomDepth(bool bEnable)
+{
+	if (WeaponMesh) {
+		WeaponMesh->SetRenderCustomDepth(bEnable);
+	}
 }
 
 // Called when the game starts or when spawned
@@ -116,6 +128,8 @@ void AWeapon::OnRep_WeaponState()
 			RotatingComponent->Deactivate();
 		}
 
+		EnableCustomDepth(false);
+
 		break;
 
 	case EWeaponState::EWS_Dropped:
@@ -126,6 +140,10 @@ void AWeapon::OnRep_WeaponState()
 		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
+		WeaponMesh->MarkRenderStateDirty();
+		EnableCustomDepth(true);
 
 		break;
 	
@@ -156,6 +174,13 @@ void AWeapon::SpendRound()
 
 void AWeapon::OnRep_Ammo()
 {
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+
+	if (PlayerOwnerCharacter && PlayerOwnerCharacter->GetCombat() && IsFull()) {
+
+		PlayerOwnerCharacter->GetCombat()->JumpToShotgunEnd();
+	}
+
 	SetHUDAmmo();
 }
 
@@ -202,6 +227,8 @@ void AWeapon::SetWeaponState(EWeaponState State)
 			RotatingComponent->Deactivate();
 		}
 
+		EnableCustomDepth(false);
+
 		break;
 
 	case EWeaponState::EWS_Dropped:
@@ -217,6 +244,10 @@ void AWeapon::SetWeaponState(EWeaponState State)
 		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
+		WeaponMesh->MarkRenderStateDirty();
+		EnableCustomDepth(true);
+
 		break;
 	}
 }
@@ -224,6 +255,11 @@ void AWeapon::SetWeaponState(EWeaponState State)
 bool AWeapon::IsEmpty()
 {
 	return Ammo <= 0;
+}
+
+bool AWeapon::IsFull()
+{
+	return Ammo == MagCapacity;
 }
 
 void AWeapon::ShowPickupWidget(bool bShowWidget)

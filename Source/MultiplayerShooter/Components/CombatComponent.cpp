@@ -14,6 +14,7 @@
 #include "Camera/CameraComponent.h"
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
+#include "MultiplayerShooter/Character/PlayerCharacterAnimInstance.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
@@ -188,6 +189,14 @@ bool UCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr) return false;
 
+	if (!EquippedWeapon->IsEmpty()
+		&& bCanFire
+		&& CombatState == ECombatState::ECS_Reloading
+		&& EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) {
+
+		return true;
+	}
+
 	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 
@@ -196,6 +205,14 @@ void UCombatComponent::OnRep_CarriedAmmo()
 	Controller = Controller == nullptr ? Cast<AMS_PlayerController>(Character->Controller) : Controller;
 	if (Controller) {
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	if (CombatState == ECombatState::ECS_Reloading
+		&& EquippedWeapon != nullptr
+		&& EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun
+		&& CarriedAmmo == 0) {
+
+		JumpToShotgunEnd();
 	}
 }
 
@@ -268,6 +285,14 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	if (EquippedWeapon && bFireButtonPressed) {
 
 		Fire();
+	}
+}
+
+void UCombatComponent::ShotgunShellReload()
+{
+	if (Character && Character->HasAuthority()) {
+
+		UpdateShotgunAmmoValues();
 	}
 }
 
@@ -345,6 +370,16 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 {
 	if (EquippedWeapon == nullptr) return;
 
+	if (Character && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) {
+
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->Fire(TraceHitTarget);
+
+		CombatState = ECombatState::ECS_Unoccupied;
+
+		return;
+	}
+
 	if (Character && CombatState == ECombatState::ECS_Unoccupied) {
 
 		Character->PlayFireMontage(bAiming);
@@ -355,6 +390,7 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (Character == nullptr || WeaponToEquip == nullptr) return;
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
 
 	if (EquippedWeapon) {
 		EquippedWeapon->Dropped();
@@ -399,7 +435,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::Reload()
 {
-	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading) {
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied) {
 
 		ServerReload();
 	}
@@ -453,6 +489,30 @@ int32 UCombatComponent::AmountToReload()
 	return 0;
 }
 
+void UCombatComponent::ThrowGrenade()
+{
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character) {
+
+		Character->PlayThrowGrenadeMontage();
+	}
+	if (Character && !Character->HasAuthority()) {
+
+		ServerThrowGrenade();
+	}
+}
+
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character) {
+
+		Character->PlayThrowGrenadeMontage();
+	}
+}
+
 
 void UCombatComponent::OnRep_CombatState()
 {
@@ -465,6 +525,14 @@ void UCombatComponent::OnRep_CombatState()
 	case ECombatState::ECS_Unoccupied:
 
 		if (bFireButtonPressed) { Fire(); }
+
+		break;
+	case ECombatState::ECS_ThrowingGrenade:
+
+		if (Character && !Character->IsLocallyControlled()) {
+
+			Character->PlayThrowGrenadeMontage();
+		}
 
 		break;
 	}
@@ -488,4 +556,41 @@ void UCombatComponent::UpdateAmmoValues()
 	}
 
 	EquippedWeapon->AddAmmo(-ReloadAmount);
+}
+
+void UCombatComponent::UpdateShotgunAmmoValues()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
+
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= 1;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	Controller = Controller == nullptr ? Cast<AMS_PlayerController>(Character->Controller) : Controller;
+	if (Controller) {
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+
+	EquippedWeapon->AddAmmo(-1);
+	bCanFire = true;
+	if (EquippedWeapon->IsFull() || CarriedAmmo == 0) {
+		
+		JumpToShotgunEnd();
+	}
+}
+
+void UCombatComponent::JumpToShotgunEnd()
+{
+	UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+	if (AnimInstance && Character->GetReloadMontage()) {
+
+		AnimInstance->Montage_JumpToSection(FName("ShotgunEnd"));
+	}
+}
+
+void UCombatComponent::ThrowGrenadeFinished()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
 }
