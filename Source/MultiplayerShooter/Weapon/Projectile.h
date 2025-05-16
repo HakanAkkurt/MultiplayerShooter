@@ -20,6 +20,9 @@ public:
 
 	virtual void Destroyed() override;
 
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* CollisionBox;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -44,9 +47,6 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ImpactSound;
-
-	UPROPERTY(EditAnywhere)
-	class UBoxComponent* CollisionBox;
 
 	UPROPERTY(EditAnywhere)
 	class UNiagaraSystem* TrailSystem;

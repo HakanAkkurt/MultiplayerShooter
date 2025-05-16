@@ -15,6 +15,8 @@
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
 #include "MultiplayerShooter/Character/PlayerCharacterAnimInstance.h"
+#include "MultiplayerShooter/Weapon/Projectile.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values for this component's properties
 UCombatComponent::UCombatComponent()
@@ -459,9 +461,52 @@ void UCombatComponent::ReloadEmptyWeapon()
 	}
 }
 
+void UCombatComponent::ShowAttachedGrenade(bool bShowGreande)
+{
+	if (Character && Character->GetAttachedGrenade()) {
+
+		Character->GetAttachedGrenade()->SetVisibility(bShowGreande);
+	}
+}
+
+void UCombatComponent::LaunchGrenade()
+{
+	ShowAttachedGrenade(false);
+
+	if (Character && Character->IsLocallyControlled()) {
+
+		ServerLaunchGrenade(HitTarget);
+	}
+
+}
+
+void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
+{
+	if (Character &&  GrenadeClass && Character->GetAttachedGrenade()) {
+
+		const FVector StartingLocation = Character->GetAttachedGrenade()->GetComponentLocation();
+		FVector ToTarget = Target - StartingLocation;
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = Character;
+		SpawnParams.Instigator = Character;
+		UWorld* World = GetWorld();
+		if (World) {
+
+			AProjectile* Grenade = World->SpawnActor<AProjectile>(GrenadeClass, StartingLocation, ToTarget.Rotation(), SpawnParams);
+		
+			if (Grenade) {
+
+				FCollisionQueryParams QueryParams;
+				QueryParams.AddIgnoredActor(SpawnParams.Owner);
+				Grenade->CollisionBox->IgnoreActorWhenMoving(SpawnParams.Owner, true);
+			}
+		}
+	}
+}
+
 void UCombatComponent::Reload()
 {
-	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied) {
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied && EquippedWeapon && !EquippedWeapon->IsFull()) {
 
 		ServerReload();
 	}
@@ -517,13 +562,14 @@ int32 UCombatComponent::AmountToReload()
 
 void UCombatComponent::ThrowGrenade()
 {
-	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr) return;
 
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	if (Character) {
 
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 	}
 	if (Character && !Character->HasAuthority()) {
 
@@ -538,6 +584,7 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 	}
 }
 
@@ -552,7 +599,9 @@ void UCombatComponent::OnRep_CombatState()
 		break;
 	case ECombatState::ECS_Unoccupied:
 
-		if (bFireButtonPressed) { Fire(); }
+		if (bFireButtonPressed) { 
+			Fire();
+		}
 
 		break;
 	case ECombatState::ECS_ThrowingGrenade:
@@ -561,6 +610,7 @@ void UCombatComponent::OnRep_CombatState()
 
 			Character->PlayThrowGrenadeMontage();
 			AttachActorToLeftHand(EquippedWeapon);
+			ShowAttachedGrenade(true);
 		}
 
 		break;

@@ -58,6 +58,10 @@ APlayerCharacter::APlayerCharacter()
 
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
+
+	AttachedGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Attached Grenade"));
+	AttachedGrenade->SetupAttachment(GetMesh(), FName("GrenadeSocket"));
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 
@@ -79,6 +83,12 @@ void APlayerCharacter::BeginPlay()
 
 	if (HasAuthority()) {
 		OnTakeAnyDamage.AddDynamic(this, &APlayerCharacter::ReceiveDamage);
+	}
+
+	if (AttachedGrenade)
+	{
+		AttachedGrenade->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("GrenadeSocket"));
+		AttachedGrenade->SetVisibility(false);
 	}
 }
 

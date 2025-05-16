@@ -49,6 +49,14 @@ public:
 	void PlayEquipWeaponSound();
 	void ReloadEmptyWeapon();
 
+	void ShowAttachedGrenade(bool bShowGreande);
+
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+
+	UFUNCTION(Server, Reliable)
+	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -84,6 +92,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerThrowGrenade();
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AProjectile> GrenadeClass;
 
 private:
 
