@@ -242,6 +242,12 @@ void AMS_PlayerController::PollInit()
 				SetHUDHealth(HUDHealth, HUDMaxHealth);
 				SetHUDScore(HUDScore);
 				SetHUDDefeats(HUDDefeats);
+
+				APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
+				if (PlayerCharacter && PlayerCharacter->GetCombat()) {
+
+					SetHUDGrenades(PlayerCharacter->GetCombat()->GetGrenades());
+				}
 			}
 		}
 	}
@@ -381,6 +387,22 @@ void AMS_PlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 
 		FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
 		MS_HUD->Announcement->WarmupTime->SetText(FText::FromString(CountdownText));
+	}
+}
+
+void AMS_PlayerController::SetHUDGrenades(int32 Grenades)
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+	if (MS_HUD
+		&& MS_HUD->CharacterOverlay
+		&& MS_HUD->CharacterOverlay->GrenadesText) {
+
+		FString GrenadesText = FString::Printf(TEXT("%d"), Grenades);
+		MS_HUD->CharacterOverlay->GrenadesText->SetText(FText::FromString(GrenadesText));
+	}
+	else {
+
+		HUDGrenades = Grenades;
 	}
 }
 
