@@ -18,7 +18,7 @@
 #include "MultiplayerShooter/Weapon/Projectile.h"
 #include "Components/BoxComponent.h"
 
-// Sets default values for this component's properties
+// Sets default values for this component's properties 
 UCombatComponent::UCombatComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
