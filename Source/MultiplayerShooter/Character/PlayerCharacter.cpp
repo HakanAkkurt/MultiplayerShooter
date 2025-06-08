@@ -9,6 +9,7 @@
 #include "Net/UnrealNetwork.h"
 #include "MultiplayerShooter/Weapon/Weapon.h"
 #include "MultiplayerShooter/Components/CombatComponent.h"
+#include "MultiplayerShooter/Components/BuffComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "PlayerCharacterAnimInstance.h"
@@ -44,6 +45,9 @@ APlayerCharacter::APlayerCharacter()
 
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
+
+	Buff = CreateDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
+	Buff->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
@@ -124,6 +128,10 @@ void APlayerCharacter::PostInitializeComponents()
 	if (Combat) {
 
 		Combat->Character = this;
+	}
+	if (Buff) {
+
+		Buff->Character = this;
 	}
 }
 
