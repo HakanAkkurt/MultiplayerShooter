@@ -18,13 +18,21 @@ public:
 
 	friend class APlayerCharacter;
 
+	void Heal(float HealAmount, float HealingTime);
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	void HealRampUp(float DeltaTime);
+
 private:
 	UPROPERTY()
 	class APlayerCharacter* Character;
+
+	bool bHealing = false;
+	float HealingRate = 0;
+	float AmountToHeal = 0.f;
 
 public:	
 	// Called every frame

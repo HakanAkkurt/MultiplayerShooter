@@ -585,10 +585,12 @@ void APlayerCharacter::HideCamereIfCharacterClose()
 	}
 }
 
-void APlayerCharacter::OnRep_Health()
+void APlayerCharacter::OnRep_Health(float LastHealth)
 {
 	UpdateHUDHealth();
-	PlayHitReactMontage();
+	if (Health < LastHealth) {
+		PlayHitReactMontage();
+	}
 }
 
 void APlayerCharacter::UpdateHUDHealth()
