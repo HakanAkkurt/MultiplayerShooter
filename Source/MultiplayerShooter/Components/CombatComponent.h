@@ -215,5 +215,7 @@ private:
 
 public:	
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
+	FORCEINLINE void SetBaseWalkSpeed(float WalkSpeed) { BaseWalkSpeed = WalkSpeed; }
+	FORCEINLINE void SetAimWalkSpeed(float WalkSpeed) { AimWalkSpeed = WalkSpeed; }
 		
 };

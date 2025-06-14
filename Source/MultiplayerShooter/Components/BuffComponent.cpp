@@ -4,6 +4,7 @@
 #include "BuffComponent.h"
 #include "MultiplayerShooter/Character/PlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "MultiplayerShooter/Components/CombatComponent.h"
 
 // Sets default values for this component's properties
 UBuffComponent::UBuffComponent()
@@ -21,25 +22,27 @@ void UBuffComponent::Heal(float HealAmount, float HealingTime)
 	AmountToHeal += HealAmount;
 }
 
-void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float CrouchSpeed)
+void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float AimSpeed, float CrouchSpeed)
 {
 	InitialBaseSpeed = BaseSpeed;
+	InitialAimSpeed = AimSpeed;
 	InitialCrouchSpeed = CrouchSpeed;
 }
 
-void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime)
+void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffAimSpeed, float BuffCrouchSpeed, float BuffTime)
 {
 	if (Character == nullptr) return;
 
 	Character->GetWorldTimerManager().SetTimer(SpeedBuffTimer, this, &UBuffComponent::ResetSpeeds, BuffTime);
 
-	if (Character->GetCharacterMovement()) {
+	if (Character->GetCharacterMovement() && Character->GetCombat()) {
 
 		Character->GetCharacterMovement()->MaxWalkSpeed = BuffBaseSpeed;
+		Character->GetCombat()->SetAimWalkSpeed(BuffAimSpeed);
 		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = BuffCrouchSpeed;
 	}
 
-	MulticastSpeedBuff(BuffBaseSpeed, BuffCrouchSpeed);
+	MulticastSpeedBuff(BuffBaseSpeed, BuffAimSpeed, BuffCrouchSpeed);
 }
 
 void UBuffComponent::ResetSpeeds()
@@ -47,15 +50,26 @@ void UBuffComponent::ResetSpeeds()
 	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
 
 	Character->GetCharacterMovement()->MaxWalkSpeed = InitialBaseSpeed;
+	Character->GetCombat()->SetAimWalkSpeed(InitialAimSpeed);
 	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = InitialCrouchSpeed;
 
-	MulticastSpeedBuff(InitialBaseSpeed, InitialCrouchSpeed);
+	MulticastSpeedBuff(InitialBaseSpeed, InitialAimSpeed, InitialCrouchSpeed);
 }
 
-void UBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float CrouchSpeed)
+void UBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float AimSpeed, float CrouchSpeed)
 {
-	Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+	if (Character && Character->GetCharacterMovement() && Character->GetCombat()) {
+
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+		Character->GetCombat()->SetBaseWalkSpeed(BaseSpeed);
+		Character->GetCombat()->SetAimWalkSpeed(AimSpeed);
+		
+		if (Character->IsAiming()) {
+
+			Character->GetCharacterMovement()->MaxWalkSpeed = AimSpeed;
+		}
+	}
 }
 
 void UBuffComponent::HealRampUp(float DeltaTime)

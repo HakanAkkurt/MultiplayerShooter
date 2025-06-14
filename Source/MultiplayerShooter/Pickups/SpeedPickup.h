@@ -30,6 +30,9 @@ private:
 	float BaseSpeedBuff = 1600.f;
 
 	UPROPERTY(EditAnywhere)
+	float AimSpeedBuff = 1200.f;
+
+	UPROPERTY(EditAnywhere)
 	float CrouchSpeedBuff = 850.f;
 
 	UPROPERTY(EditAnywhere)

@@ -19,8 +19,8 @@ public:
 	friend class APlayerCharacter;
 
 	void Heal(float HealAmount, float HealingTime);
-	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime);
-	void SetInitialSpeeds(float BaseSpeed, float CrouchSpeed);
+	void BuffSpeed(float BuffBaseSpeed, float BuffAimSpeed, float BuffCrouchSpeed, float BuffTime);
+	void SetInitialSpeeds(float BaseSpeed, float AimSpeed, float CrouchSpeed);
 
 protected:
 	// Called when the game starts
@@ -43,10 +43,11 @@ private:
 	FTimerHandle SpeedBuffTimer;
 	void ResetSpeeds();
 	float InitialBaseSpeed;
+	float InitialAimSpeed;
 	float InitialCrouchSpeed;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastSpeedBuff(float BaseSpeed, float CrouchSpeed);
+	void MulticastSpeedBuff(float BaseSpeed, float AimSpeed, float CrouchSpeed);
 
 public:	
 	// Called every frame

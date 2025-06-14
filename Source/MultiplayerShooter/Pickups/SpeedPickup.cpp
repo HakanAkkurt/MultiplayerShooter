@@ -15,7 +15,7 @@ void ASpeedPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		UBuffComponent* Buff = PlayerCharacter->GetBuff();
 		if (Buff) {
 
-			Buff->BuffSpeed(BaseSpeedBuff, CrouchSpeedBuff, SpeedBuffTime);
+			Buff->BuffSpeed(BaseSpeedBuff, AimSpeedBuff, CrouchSpeedBuff, SpeedBuffTime);
 		}
 
 	}

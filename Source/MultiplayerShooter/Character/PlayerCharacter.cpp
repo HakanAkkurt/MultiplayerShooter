@@ -125,14 +125,14 @@ void APlayerCharacter::RotateInPlace(float DeltaTime)
 void APlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	if (Combat) {
+
+	if (Combat && Buff) {
 
 		Combat->Character = this;
-	}
-	if (Buff) {
-
 		Buff->Character = this;
+
 		Buff->SetInitialSpeeds(GetCharacterMovement()->MaxWalkSpeed,
+			Combat->AimWalkSpeed,
 			GetCharacterMovement()->MaxWalkSpeedCrouched);
 	}
 }
