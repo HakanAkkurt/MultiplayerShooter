@@ -134,6 +134,8 @@ void APlayerCharacter::PostInitializeComponents()
 		Buff->SetInitialSpeeds(GetCharacterMovement()->MaxWalkSpeed,
 			Combat->AimWalkSpeed,
 			GetCharacterMovement()->MaxWalkSpeedCrouched);
+
+		Buff->SetInitialJumpVelocity(GetCharacterMovement()->JumpZVelocity);
 	}
 }
 
