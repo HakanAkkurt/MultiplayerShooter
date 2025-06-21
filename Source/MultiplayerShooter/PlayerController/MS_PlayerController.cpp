@@ -239,9 +239,10 @@ void AMS_PlayerController::PollInit()
 			CharacterOverlay = MS_HUD->CharacterOverlay;
 			if (CharacterOverlay) {
 
-				SetHUDHealth(HUDHealth, HUDMaxHealth);
-				SetHUDScore(HUDScore);
-				SetHUDDefeats(HUDDefeats);
+				if (bInitializeHealth) SetHUDHealth(HUDHealth, HUDMaxHealth);
+				if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
+				if (bInitializeScore) SetHUDScore(HUDScore);
+				if (bInitializeDefeats) SetHUDDefeats(HUDDefeats);
 
 				APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
 				if (PlayerCharacter && PlayerCharacter->GetCombat()) {
@@ -284,9 +285,32 @@ void AMS_PlayerController::SetHUDHealth(float Health, float MaxHealth)
 	}
 	else {
 
-		bInitializeCharacterOverlay = true;
+		bInitializeHealth = true;
 		HUDHealth = Health;
 		HUDMaxHealth = MaxHealth;
+	}
+}
+
+void AMS_PlayerController::SetHUDShield(float Shield, float MaxShield)
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+
+	if (MS_HUD
+		&& MS_HUD->CharacterOverlay
+		&& MS_HUD->CharacterOverlay->ShieldBar
+		&& MS_HUD->CharacterOverlay->ShieldText) {
+
+		const float ShieldPercent = Shield / MaxShield;
+		MS_HUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
+
+		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+		MS_HUD->CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+	}
+	else {
+
+		bInitializeShield = true;
+		HUDShield = Shield;
+		HUDMaxShield = MaxShield;
 	}
 }
 
@@ -302,7 +326,7 @@ void AMS_PlayerController::SetHUDScore(float Score)
 	}
 	else {
 
-		bInitializeCharacterOverlay = true;
+		bInitializeScore = true;
 		HUDScore = Score;
 	}
 }
@@ -319,7 +343,7 @@ void AMS_PlayerController::SetHUDDefeats(int32 Defeats)
 	}
 	else {
 
-		bInitializeCharacterOverlay = true;
+		bInitializeDefeats = true;
 		HUDDefeats = Defeats;
 	}
 }
@@ -414,5 +438,6 @@ void AMS_PlayerController::OnPossess(APawn* InPawn)
 	if (PlayerCharacter) {
 
 		SetHUDHealth(PlayerCharacter->GetHealth(), PlayerCharacter->GetMaxHealth());
+		SetHUDShield(PlayerCharacter->GetShield(), PlayerCharacter->GetMaxShield());
 	}
 }
