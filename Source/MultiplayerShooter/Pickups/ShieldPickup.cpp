@@ -1,11 +1,11 @@
 // Hakan Games. All Rights Reserved.
 
 
-#include "HealthPickup.h"
+#include "ShieldPickup.h"
 #include "MultiPlayerShooter/Character/PlayerCharacter.h"
 #include "MultiPlayerShooter/Components/BuffComponent.h"
 
-void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AShieldPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
@@ -15,7 +15,7 @@ void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		UBuffComponent* Buff = PlayerCharacter->GetBuff();
 		if (Buff) {
 
-			Buff->Heal(HealAmount, HealingTime);
+			Buff->ReplenishShield(ShieldReplenishAmount, ShieldReplenishTime);
 		}
 
 	}
