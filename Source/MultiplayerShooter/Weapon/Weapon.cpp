@@ -41,9 +41,6 @@ AWeapon::AWeapon()
 	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupWidget"));
 	PickupWidget->SetupAttachment(RootComponent);
 
-	RotatingComponent = CreateDefaultSubobject<URotatingMovementComponent>(TEXT("RotatingComponent"));
-	RotatingComponent->RotationRate = FRotator(0.f, 90.f, 0.f);
-
 }
 
 void AWeapon::EnableCustomDepth(bool bEnable)
@@ -123,11 +120,6 @@ void AWeapon::OnRep_WeaponState()
 			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		}
 
-		if (RotatingComponent)
-		{
-			RotatingComponent->Deactivate();
-		}
-
 		EnableCustomDepth(false);
 
 		break;
@@ -195,7 +187,11 @@ void AWeapon::OnRep_Owner()
 	}
 	else {
 
-		SetHUDAmmo();
+		//PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(Owner) : PlayerOwnerCharacter;
+		//if (PlayerOwnerCharacter && PlayerOwnerCharacter->GetEquippedWeapon() && PlayerOwnerCharacter->GetEquippedWeapon() == this) {
+
+			SetHUDAmmo();
+		//}
 	}
 
 }
@@ -220,11 +216,6 @@ void AWeapon::SetWeaponState(EWeaponState State)
 			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			WeaponMesh->SetEnableGravity(true);
 			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		}
-
-		if (RotatingComponent)
-		{
-			RotatingComponent->Deactivate();
 		}
 
 		EnableCustomDepth(false);

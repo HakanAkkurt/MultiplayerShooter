@@ -84,9 +84,11 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	SpawnDefaultWeapon();
+	UpdateHUDAmmo();
 	UpdateHUDHealth();
-
 	UpdateHUDShield();
+	UpdateHUDGrenade();
 
 	if (HasAuthority()) {
 		OnTakeAnyDamage.AddDynamic(this, &APlayerCharacter::ReceiveDamage);
@@ -232,7 +234,15 @@ void APlayerCharacter::PlayThrowGrenadeMontage()
 void APlayerCharacter::Eliminate()
 {
 	if (Combat && Combat->EquippedWeapon) {
-		Combat->EquippedWeapon->Dropped();
+
+		if (Combat->EquippedWeapon->bDestroyWeapon) {
+
+			Combat->EquippedWeapon->Destroy();
+		}
+		else {
+
+			Combat->EquippedWeapon->Dropped();
+		}
 	}
 
 	MulticastEliminate();
@@ -421,15 +431,7 @@ void APlayerCharacter::EquipButtonPressed()
 
 	if (Combat) {
 
-		if (HasAuthority()) {
-
-			Combat->EquipWeapon(OverlappingWeapon);
-		}
-		else {
-
-			ServerEquipButtonPressed();
-		}
-
+		ServerEquipButtonPressed();
 	}
 }
 
@@ -640,6 +642,42 @@ void APlayerCharacter::UpdateHUDShield()
 	if (MS_PlayerController) {
 
 		MS_PlayerController->SetHUDShield(Shield, MaxShield);
+	}
+}
+
+void APlayerCharacter::UpdateHUDAmmo()
+{
+	MS_PlayerController = MS_PlayerController == nullptr ? Cast<AMS_PlayerController>(Controller) : MS_PlayerController;
+	if (MS_PlayerController && Combat && Combat->EquippedWeapon) {
+
+		MS_PlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
+		MS_PlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
+	}
+}
+
+void APlayerCharacter::SpawnDefaultWeapon()
+{
+	AMS_GameMode* MS_GameMode = Cast<AMS_GameMode>(UGameplayStatics::GetGameMode(this));
+	UWorld* World = GetWorld();
+
+	if (MS_GameMode && World && !bEliminated && DefaultWeaponClass) {
+		
+		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+		StartingWeapon->bDestroyWeapon = true;
+
+		if (Combat) {
+
+			Combat->EquipWeapon(StartingWeapon);
+		}
+	}
+}
+
+void APlayerCharacter::UpdateHUDGrenade()
+{
+	MS_PlayerController = MS_PlayerController == nullptr ? Cast<AMS_PlayerController>(Controller) : MS_PlayerController;
+	if (MS_PlayerController) {
+
+		MS_PlayerController->SetHUDGrenades(Combat->GetGrenades());
 	}
 }
 

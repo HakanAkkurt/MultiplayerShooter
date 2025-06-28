@@ -243,6 +243,8 @@ void AMS_PlayerController::PollInit()
 				if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
 				if (bInitializeScore) SetHUDScore(HUDScore);
 				if (bInitializeDefeats) SetHUDDefeats(HUDDefeats);
+				if (bInitializeCarriedAmmo) SetHUDCarriedAmmo(HUDCarriedAmmo);
+				if (bInitializeWeaponAmmo) SetHUDWeaponAmmo(HUDWeaponAmmo);
 
 				APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetPawn());
 				if (PlayerCharacter && PlayerCharacter->GetCombat()) {
@@ -358,6 +360,10 @@ void AMS_PlayerController::SetHUDWeaponAmmo(int32 Ammo)
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		MS_HUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
 	}
+	else {
+		bInitializeWeaponAmmo = true;
+		HUDWeaponAmmo = Ammo;
+	}
 }
 
 void AMS_PlayerController::SetHUDCarriedAmmo(int32 Ammo)
@@ -369,6 +375,10 @@ void AMS_PlayerController::SetHUDCarriedAmmo(int32 Ammo)
 
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		MS_HUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+	else {
+		bInitializeCarriedAmmo = true;
+		HUDCarriedAmmo = Ammo;
 	}
 }
 
@@ -439,5 +449,6 @@ void AMS_PlayerController::OnPossess(APawn* InPawn)
 
 		SetHUDHealth(PlayerCharacter->GetHealth(), PlayerCharacter->GetMaxHealth());
 		SetHUDShield(PlayerCharacter->GetShield(), PlayerCharacter->GetMaxShield());
+		PlayerCharacter->UpdateHUDAmmo();
 	}
 }
