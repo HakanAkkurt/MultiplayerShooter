@@ -233,15 +233,15 @@ void APlayerCharacter::PlayThrowGrenadeMontage()
 
 void APlayerCharacter::Eliminate()
 {
-	if (Combat && Combat->EquippedWeapon) {
+	if (Combat) {
 
-		if (Combat->EquippedWeapon->bDestroyWeapon) {
+		if (Combat->EquippedWeapon) {
 
-			Combat->EquippedWeapon->Destroy();
+			DropOrDestroyWeapon(Combat->EquippedWeapon);
 		}
-		else {
+		if (Combat->SecondaryWeapon) {
 
-			Combat->EquippedWeapon->Dropped();
+			DropOrDestroyWeapon(Combat->SecondaryWeapon);
 		}
 	}
 
@@ -249,6 +249,18 @@ void APlayerCharacter::Eliminate()
 
 	GetWorldTimerManager().SetTimer(EliminateTimer, this, &APlayerCharacter::EliminateTimerFinished,
 		EliminateDelay);
+}
+
+void APlayerCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
+{
+	if (Weapon == nullptr) return;
+
+	if (Weapon->bDestroyWeapon) {
+		Weapon->Destroy();
+	}
+	else {
+		Weapon->Dropped();
+	}
 }
 
 void APlayerCharacter::Destroyed()
@@ -439,7 +451,13 @@ void APlayerCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if (Combat) {
 
-		Combat->EquipWeapon(OverlappingWeapon);
+		if (OverlappingWeapon) {
+
+			Combat->EquipWeapon(OverlappingWeapon);
+		}
+		else if (Combat->ShouldSwapWeapons()) {
+			Combat->SwapWeapons();
+		}
 
 	}
 }

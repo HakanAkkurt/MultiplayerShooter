@@ -26,6 +26,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+	void SwapWeapons();
 
 	void Reload();
 
@@ -45,7 +46,7 @@ public:
 	void DropEquippedWeapon();
 	void AttachActorToRightHand(AActor* ActorToAttach);
 	void AttachActorToLeftHand(AActor* ActorToAttach);
-	void AttachActorBackpack(AActor* ActorToAttach);
+	void AttachActorToBackpack(AActor* ActorToAttach);
 	void UpdateCarriedAmmo();
 	void PlayEquipWeaponSound(AWeapon* WeaponToEquip);
 	void ReloadEmptyWeapon();
@@ -227,5 +228,6 @@ public:
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 	FORCEINLINE void SetBaseWalkSpeed(float WalkSpeed) { BaseWalkSpeed = WalkSpeed; }
 	FORCEINLINE void SetAimWalkSpeed(float WalkSpeed) { AimWalkSpeed = WalkSpeed; }
+	bool ShouldSwapWeapons();
 		
 };
