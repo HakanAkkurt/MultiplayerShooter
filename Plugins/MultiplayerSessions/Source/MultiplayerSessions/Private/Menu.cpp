@@ -117,6 +117,8 @@ void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResu
 
 		if (SettingsValue == MatchType) {
 
+			Result.Session.SessionSettings.bUseLobbiesIfAvailable = true;
+
 			MultiplayerSessionsSubsystem->JoinSession(Result);
 			
 			return;
