@@ -14,6 +14,7 @@
 #include "MultiplayerShooter/Components/CombatComponent.h"
 #include "MultiplayerShooter/GameState/MS_GameState.h"
 #include "MultiplayerShooter/PlayerState/MS_PlayerState.h"
+#include "Components/Image.h"
 
 void AMS_PlayerController::BeginPlay()
 {
@@ -33,6 +34,8 @@ void AMS_PlayerController::Tick(float DeltaTime)
 	CheckTimeSync(DeltaTime);
 
 	PollInit();
+
+	CheckPing(DeltaTime);
 }
 
 void AMS_PlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -50,6 +53,69 @@ void AMS_PlayerController::CheckTimeSync(float DeltaTime)
 
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 		TimeSyncRunningTime = 0.f;
+	}
+}
+
+void AMS_PlayerController::HighPingWarning()
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+
+	if (MS_HUD && MS_HUD->CharacterOverlay &&
+		MS_HUD->CharacterOverlay->HighPingImage &&
+		MS_HUD->CharacterOverlay->HighPingAnimation){
+
+		MS_HUD->CharacterOverlay->HighPingImage->SetOpacity(1.f);
+		MS_HUD->CharacterOverlay->PlayAnimation(MS_HUD->CharacterOverlay->HighPingAnimation, 0.f, 5);
+	}
+}
+
+void AMS_PlayerController::StopHighPingWarning()
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+
+	if (MS_HUD && MS_HUD->CharacterOverlay &&
+		MS_HUD->CharacterOverlay->HighPingImage &&
+		MS_HUD->CharacterOverlay->HighPingAnimation) {
+
+		MS_HUD->CharacterOverlay->HighPingImage->SetOpacity(0.f);
+
+		if (MS_HUD->CharacterOverlay->IsAnimationPlaying(MS_HUD->CharacterOverlay->HighPingAnimation)) {
+
+			MS_HUD->CharacterOverlay->StopAnimation(MS_HUD->CharacterOverlay->HighPingAnimation);
+		}
+	}
+}
+
+void AMS_PlayerController::CheckPing(float DeltaTime)
+{
+	HighPingRunningTime += DeltaTime;
+
+	if (HighPingRunningTime > CheckPingFrequency){
+
+		if (!PlayerState) PlayerState = GetPlayerState<APlayerState>();
+
+		if (PlayerState) {
+
+			PlayerState = GetPlayerState<APlayerState>();
+			if (PlayerState->GetPingInMilliseconds() * 4 > HighPingThreshold) { // ping is compressed; it's actually ping / 4
+
+				HighPingWarning();
+				PingAnimationRunningTime = 0.f;
+			}
+		}
+
+		HighPingRunningTime = 0.f;
+	}
+
+	if (MS_HUD && MS_HUD->CharacterOverlay &&
+		MS_HUD->CharacterOverlay->HighPingAnimation &&
+		MS_HUD->CharacterOverlay->IsAnimationPlaying(MS_HUD->CharacterOverlay->HighPingAnimation)) {
+
+		PingAnimationRunningTime += DeltaTime;
+		if (PingAnimationRunningTime > HighPingDuration) {
+
+			StopHighPingWarning();
+		}
 	}
 }
 
