@@ -64,6 +64,8 @@ public:
 	void EquipPrimaryWeapon(AWeapon* WeaponToEquip);
 	void EquipSecondaryWeapon(AWeapon* WeaponToEquip);
 
+	bool bLocallyReloading = false;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

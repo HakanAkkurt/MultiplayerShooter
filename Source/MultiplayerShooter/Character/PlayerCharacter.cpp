@@ -775,3 +775,10 @@ ECombatState APlayerCharacter::GetCombatState() const
 
 	return Combat->CombatState;
 }
+
+bool APlayerCharacter::IsLocallyReloading()
+{
+	if (Combat == nullptr) return false;
+
+	return Combat->bLocallyReloading;
+}
