@@ -9,6 +9,8 @@
 #include "Sound/SoundCue.h"
 #include "DrawDebugHelpers.h"
 #include "WeaponTypes.h"
+#include "MultiplayerShooter/Components/LagCompensationComponent.h"
+#include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget)
 {
@@ -31,15 +33,34 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 
 		APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(FireHit.GetActor());
 
-		if (PlayerCharacter && HasAuthority() && InstigatorController) {
+		if (PlayerCharacter && InstigatorController) {
 
-			UGameplayStatics::ApplyDamage(
-				PlayerCharacter,
-				Damage,
-				InstigatorController,
-				this,
-				UDamageType::StaticClass()
-			);
+			if (HasAuthority() && !bUseServerSideRewind)
+			{
+				UGameplayStatics::ApplyDamage(
+					PlayerCharacter,
+					Damage,
+					InstigatorController,
+					this,
+					UDamageType::StaticClass()
+				);
+			}
+			if (!HasAuthority() && bUseServerSideRewind) {
+
+				PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(OwnerPawn) : PlayerOwnerCharacter;
+				PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AMS_PlayerController>(InstigatorController) : PlayerOwnerController;
+				
+				if (PlayerOwnerController && PlayerOwnerCharacter && PlayerOwnerCharacter->GetLagCompensation())
+				{
+					PlayerOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
+						PlayerCharacter,
+						Start,
+						HitTarget,
+						PlayerOwnerController->GetServerTime() - PlayerOwnerController->SingleTripTime,
+						this
+					);
+				}
+			}
 		}
 
 		if (ImpactParticles) {

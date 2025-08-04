@@ -42,6 +42,8 @@ public:
 
 	void HandleCooldown();
 
+	float SingleTripTime = 0.f;
+
 protected:
 	virtual void BeginPlay() override;
 

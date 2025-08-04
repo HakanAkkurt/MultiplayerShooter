@@ -55,6 +55,9 @@ public:
 	void UpdateHUDGrenade();
 	void SpawnDefaultWeapon();
 
+	UPROPERTY()
+	TMap<FName, class UBoxComponent*> HitCollisionBoxes;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -167,6 +170,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	class UBuffComponent* Buff;
+
+	UPROPERTY(VisibleAnywhere)
+	class ULagCompensationComponent* LagCompensation;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
@@ -286,4 +292,6 @@ public:
 	FORCEINLINE UBuffComponent* GetBuff() const { return Buff; }
 
 	bool IsLocallyReloading();
+
+	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
 };
