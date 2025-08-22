@@ -31,6 +31,9 @@ struct FFramePackage
 
 	UPROPERTY()
 	TMap<FName, FBoxInformation> HitBoxInfo;
+
+	UPROPERTY()
+	APlayerCharacter* Character;
 };
 
 USTRUCT(BlueprintType)
@@ -45,6 +48,19 @@ struct FServerSideRewindResult
 	bool bHeadShot;
 };
 
+USTRUCT(BlueprintType)
+struct FShotgunServerSideRewindResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TMap<APlayerCharacter*, uint32> HeadShots;
+
+	UPROPERTY()
+	TMap<APlayerCharacter*, uint32> BodyShots;
+
+};
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class MULTIPLAYERSHOOTER_API ULagCompensationComponent : public UActorComponent
 {
@@ -55,10 +71,17 @@ public:
 	friend class APlayerCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
+	
 	FServerSideRewindResult ServerSideRewind(
 		class APlayerCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
+		float HitTime);
+
+	FShotgunServerSideRewindResult ShotgunServerSideRewind(
+		const TArray<APlayerCharacter*>& HitCharacters,
+		const FVector_NetQuantize& TraceStart,
+		const TArray<FVector_NetQuantize>& HitLocations,
 		float HitTime);
 
 	UFUNCTION(Server, Reliable)
@@ -69,6 +92,15 @@ public:
 		float HitTime,
 		class AWeapon* DamageCauser
 	);
+
+	UFUNCTION(Server, Reliable)
+	void ShotgunServerScoreRequest(
+		const TArray<APlayerCharacter*>& HitCharacters,
+		const FVector_NetQuantize& TraceStart,
+		const TArray<FVector_NetQuantize>& HitLocations,
+		float HitTime
+	);
+
 
 protected:
 
@@ -88,6 +120,15 @@ protected:
 	void EnableCharacterMeshCollision(APlayerCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
 	
 	void SaveFramePackage();
+	FFramePackage GetFrameToCheck(APlayerCharacter* HitCharacter, float HitTime);
+
+	// Shotgun
+
+	FShotgunServerSideRewindResult ShotgunConfirmHit(
+		const TArray<FFramePackage>& FramePackages,
+		const FVector_NetQuantize& TraceStart,
+		const TArray<FVector_NetQuantize>& HitLocations
+	);
 
 private:
 
