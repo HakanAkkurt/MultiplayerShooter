@@ -3,7 +3,9 @@
 
 #include "ProjectileBullet.h"
 #include "Kismet/GameplayStatics.h"
-#include "GameFramework/Character.h"
+#include "MultiplayerShooter/Character/PlayerCharacter.h"
+#include "MultiplayerShooter/PlayerController/MS_PlayerController.h"
+#include "MultiplayerShooter/Components/LagCompensationComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 AProjectileBullet::AProjectileBullet()
@@ -34,15 +36,30 @@ void AProjectileBullet::PostEditChangeProperty(FPropertyChangedEvent& Event)
 
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (OwnerCharacter) {
-
-		AController* OwnerController = OwnerCharacter->Controller;
-		if (OwnerController) {
-			UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+	APlayerCharacter* OwnerCharacter = Cast<APlayerCharacter>(GetOwner());
+	if (OwnerCharacter)
+	{
+		AMS_PlayerController* OwnerController = Cast<AMS_PlayerController>(OwnerCharacter->Controller);
+		if (OwnerController)
+		{
+			if (OwnerCharacter->HasAuthority() && !bUseServerSideRewind)
+			{
+				UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+				Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
+				return;
+			}
+			APlayerCharacter* HitCharacter = Cast<APlayerCharacter>(OtherActor);
+			if (bUseServerSideRewind && OwnerCharacter->GetLagCompensation() && OwnerCharacter->IsLocallyControlled() && HitCharacter)
+			{
+				OwnerCharacter->GetLagCompensation()->ProjectileServerScoreRequest(
+					HitCharacter,
+					TraceStart,
+					InitialVelocity,
+					OwnerController->GetServerTime() - OwnerController->SingleTripTime
+				);
+			}
 		}
 	}
-
 
 	Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
 }
@@ -50,7 +67,7 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 void AProjectileBullet::BeginPlay()
 {
 	Super::BeginPlay();
-
+	/*
 	FPredictProjectilePathParams PathParams;
 	PathParams.bTraceWithChannel = true;
 	PathParams.bTraceWithCollision = true;
@@ -66,5 +83,5 @@ void AProjectileBullet::BeginPlay()
 
 	FPredictProjectilePathResult PathResult;
 
-	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);*/
 }

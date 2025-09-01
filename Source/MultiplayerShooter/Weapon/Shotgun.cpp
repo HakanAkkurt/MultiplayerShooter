@@ -70,7 +70,7 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 		{
 			if (HitPair.Key && InstigatorController)
 			{
-				if (HasAuthority() && !bUseServerSideRewind)
+				if (HasAuthority() && (!bUseServerSideRewind || OwnerPawn->IsLocallyControlled()))
 				{
 					UGameplayStatics::ApplyDamage(
 						HitPair.Key, // Character that was hit
@@ -88,6 +88,7 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 		{
 			PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(OwnerPawn) : PlayerOwnerCharacter;
 			PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AMS_PlayerController>(InstigatorController) : PlayerOwnerController;
+
 			if (PlayerOwnerController && PlayerOwnerCharacter && PlayerOwnerCharacter->GetLagCompensation() && PlayerOwnerCharacter->IsLocallyControlled())
 			{
 				PlayerOwnerCharacter->GetLagCompensation()->ShotgunServerScoreRequest(

@@ -35,7 +35,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 
 		if (PlayerCharacter && InstigatorController) {
 
-			if (HasAuthority() && !bUseServerSideRewind)
+			if (HasAuthority() && (!bUseServerSideRewind || OwnerPawn->IsLocallyControlled()))
 			{
 				UGameplayStatics::ApplyDamage(
 					PlayerCharacter,
