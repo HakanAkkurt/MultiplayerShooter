@@ -88,6 +88,7 @@ void AMS_PlayerController::StopHighPingWarning()
 
 void AMS_PlayerController::CheckPing(float DeltaTime)
 {
+	if (HasAuthority()) return;
 	HighPingRunningTime += DeltaTime;
 
 	if (HighPingRunningTime > CheckPingFrequency){
@@ -101,6 +102,11 @@ void AMS_PlayerController::CheckPing(float DeltaTime)
 
 				HighPingWarning();
 				PingAnimationRunningTime = 0.f;
+				ServerReportPingStatus(true);
+			}
+			else
+			{
+				ServerReportPingStatus(false);
 			}
 		}
 
@@ -191,6 +197,12 @@ void AMS_PlayerController::OnRep_MatchState()
 
 		HandleCooldown();
 	}
+}
+
+// Is the ping too high?
+void AMS_PlayerController::ServerReportPingStatus_Implementation(bool bHighPing)
+{
+	HighPingDelegate.Broadcast(bHighPing);
 }
 
 void AMS_PlayerController::HandleMatchHasStarted()

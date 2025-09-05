@@ -17,13 +17,11 @@
 // Sets default values
 AWeapon::AWeapon()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	SetReplicateMovement(true);
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-	WeaponMesh->SetupAttachment(RootComponent);
 	SetRootComponent(WeaponMesh);
 
 	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
@@ -41,37 +39,34 @@ AWeapon::AWeapon()
 
 	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupWidget"));
 	PickupWidget->SetupAttachment(RootComponent);
-
 }
 
 void AWeapon::EnableCustomDepth(bool bEnable)
 {
-	if (WeaponMesh) {
+	if (WeaponMesh)
+	{
 		WeaponMesh->SetRenderCustomDepth(bEnable);
 	}
 }
 
-// Called when the game starts or when spawned
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
 	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
 
-	if (PickupWidget) {
-
+	if (PickupWidget)
+	{
 		PickupWidget->SetVisibility(false);
 	}
 }
 
-// Called every frame
 void AWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -79,13 +74,14 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+	DOREPLIFETIME_CONDITION(AWeapon, bUseServerSideRewind, COND_OwnerOnly);
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
-	if (PlayerCharacter) {
-
+	if (PlayerCharacter)
+	{
 		PlayerCharacter->SetOverlappingWeapon(this);
 	}
 }
@@ -93,8 +89,8 @@ void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(OtherActor);
-	if (PlayerCharacter) {
-
+	if (PlayerCharacter)
+	{
 		PlayerCharacter->SetOverlappingWeapon(nullptr);
 	}
 }
@@ -102,12 +98,11 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 void AWeapon::SetHUDAmmo()
 {
 	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
-	if (PlayerOwnerCharacter) {
-
+	if (PlayerOwnerCharacter)
+	{
 		PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AMS_PlayerController>(PlayerOwnerCharacter->Controller) : PlayerOwnerController;
-
-		if (PlayerOwnerController) {
-
+		if (PlayerOwnerController)
+		{
 			PlayerOwnerController->SetHUDWeaponAmmo(Ammo);
 		}
 	}
@@ -116,14 +111,13 @@ void AWeapon::SetHUDAmmo()
 void AWeapon::SpendRound()
 {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
-
 	SetHUDAmmo();
-	if (HasAuthority()) {
-
+	if (HasAuthority())
+	{
 		ClientUpdateAmmo(Ammo);
 	}
-	else if (PlayerOwnerCharacter && PlayerOwnerCharacter->IsLocallyControlled()){
-
+	else
+	{
 		++Sequence;
 	}
 }
@@ -131,7 +125,6 @@ void AWeapon::SpendRound()
 void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 {
 	if (HasAuthority()) return;
-
 	Ammo = ServerAmmo;
 	--Sequence;
 	Ammo -= Sequence;
@@ -141,21 +134,17 @@ void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 void AWeapon::AddAmmo(int32 AmmoToAdd)
 {
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
-
 	SetHUDAmmo();
-
 	ClientAddAmmo(AmmoToAdd);
 }
 
 void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 {
 	if (HasAuthority()) return;
-
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
-	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(Owner) : PlayerOwnerCharacter;
-	
-	if (PlayerOwnerCharacter && PlayerOwnerCharacter->GetCombat() && IsFull()) {
-
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+	if (PlayerOwnerCharacter && PlayerOwnerCharacter->GetCombat() && IsFull())
+	{
 		PlayerOwnerCharacter->GetCombat()->JumpToShotgunEnd();
 	}
 	SetHUDAmmo();
@@ -164,21 +153,19 @@ void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 void AWeapon::OnRep_Owner()
 {
 	Super::OnRep_Owner();
-
-	if (Owner == nullptr) {
-
+	if (Owner == nullptr)
+	{
 		PlayerOwnerCharacter = nullptr;
-		PlayerOwnerController = nullptr;
+		PlayerOwnerCharacter = nullptr;
 	}
-	else {
-
+	else
+	{
 		PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(Owner) : PlayerOwnerCharacter;
-		if (PlayerOwnerCharacter && PlayerOwnerCharacter->GetEquippedWeapon() && PlayerOwnerCharacter->GetEquippedWeapon() == this) {
-
+		if (PlayerOwnerCharacter && PlayerOwnerCharacter->GetEquippedWeapon() && PlayerOwnerCharacter->GetEquippedWeapon() == this)
+		{
 			SetHUDAmmo();
 		}
 	}
-
 }
 
 void AWeapon::SetWeaponState(EWeaponState State)
@@ -191,23 +178,21 @@ void AWeapon::OnWeaponStateSet()
 {
 	switch (WeaponState)
 	{
-
 	case EWeaponState::EWS_Equipped:
-
 		OnEquipped();
-
 		break;
 	case EWeaponState::EWS_EquippedSecondary:
-
 		OnEquippedSecondary();
-
 		break;
 	case EWeaponState::EWS_Dropped:
-
 		OnDropped();
-
 		break;
 	}
+}
+
+void AWeapon::OnPingTooHigh(bool bPingTooHigh)
+{
+	bUseServerSideRewind = !bPingTooHigh;
 }
 
 void AWeapon::OnRep_WeaponState()
@@ -219,26 +204,34 @@ void AWeapon::OnEquipped()
 {
 	ShowPickupWidget(false);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	WeaponMesh->SetSimulatePhysics(false);
 	WeaponMesh->SetEnableGravity(false);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	if (WeaponType == EWeaponType::EWT_SubmachineGun) {
+	if (WeaponType == EWeaponType::EWT_SubmachineGun)
+	{
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	}
-
 	EnableCustomDepth(false);
+
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+	if (PlayerOwnerCharacter && bUseServerSideRewind)
+	{
+		PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AMS_PlayerController>(PlayerOwnerCharacter->Controller) : PlayerOwnerController;
+		if (PlayerOwnerController && HasAuthority() && !PlayerOwnerController->HighPingDelegate.IsBound())
+		{
+			PlayerOwnerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);
+		}
+	}
 }
 
 void AWeapon::OnDropped()
 {
-	if (HasAuthority()) {
+	if (HasAuthority())
+	{
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	}
-
 	WeaponMesh->SetSimulatePhysics(true);
 	WeaponMesh->SetEnableGravity(true);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -249,24 +242,92 @@ void AWeapon::OnDropped()
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
 	WeaponMesh->MarkRenderStateDirty();
 	EnableCustomDepth(true);
+
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+	if (PlayerOwnerCharacter)
+	{
+		PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AMS_PlayerController>(PlayerOwnerCharacter->Controller) : PlayerOwnerController;
+		if (PlayerOwnerController && HasAuthority() && PlayerOwnerController->HighPingDelegate.IsBound())
+		{
+			PlayerOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
+		}
+	}
 }
 
 void AWeapon::OnEquippedSecondary()
 {
 	ShowPickupWidget(false);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	WeaponMesh->SetSimulatePhysics(false);
 	WeaponMesh->SetEnableGravity(false);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	if (WeaponType == EWeaponType::EWT_SubmachineGun) {
+	if (WeaponType == EWeaponType::EWT_SubmachineGun)
+	{
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	}
+	EnableCustomDepth(true);
+	if (WeaponMesh)
+	{
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
+		WeaponMesh->MarkRenderStateDirty();
+	}
 
-	EnableCustomDepth(false);
+	PlayerOwnerCharacter = PlayerOwnerCharacter == nullptr ? Cast<APlayerCharacter>(GetOwner()) : PlayerOwnerCharacter;
+	if (PlayerOwnerCharacter)
+	{
+		PlayerOwnerController = PlayerOwnerController == nullptr ? Cast<AMS_PlayerController>(PlayerOwnerCharacter->Controller) : PlayerOwnerController;
+		if (PlayerOwnerController && HasAuthority() && PlayerOwnerController->HighPingDelegate.IsBound())
+		{
+			PlayerOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
+		}
+	}
+}
+
+void AWeapon::ShowPickupWidget(bool bShowWidget)
+{
+	if (PickupWidget)
+	{
+		PickupWidget->SetVisibility(bShowWidget);
+	}
+}
+
+void AWeapon::Fire(const FVector& HitTarget)
+{
+	if (FireAnimation)
+	{
+		WeaponMesh->PlayAnimation(FireAnimation, false);
+	}
+	if (CasingClass)
+	{
+		const USkeletalMeshSocket* AmmoEjectSocket = WeaponMesh->GetSocketByName(FName("AmmoEject"));
+		if (AmmoEjectSocket)
+		{
+			FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(WeaponMesh);
+
+			UWorld* World = GetWorld();
+			if (World)
+			{
+				World->SpawnActor<ACasing>(
+					CasingClass,
+					SocketTransform.GetLocation(),
+					SocketTransform.GetRotation().Rotator()
+				);
+			}
+		}
+	}
+	SpendRound();
+}
+
+void AWeapon::Dropped()
+{
+	SetWeaponState(EWeaponState::EWS_Dropped);
+	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
+	WeaponMesh->DetachFromComponent(DetachRules);
+	SetOwner(nullptr);
+	PlayerOwnerCharacter = nullptr;
+	PlayerOwnerCharacter = nullptr;
 }
 
 bool AWeapon::IsEmpty()
@@ -277,56 +338,6 @@ bool AWeapon::IsEmpty()
 bool AWeapon::IsFull()
 {
 	return Ammo == MagCapacity;
-}
-
-void AWeapon::ShowPickupWidget(bool bShowWidget)
-{
-	if (PickupWidget) {
-
-		PickupWidget->SetVisibility(bShowWidget);
-	}
-}
-
-void AWeapon::Fire(const FVector& HitTarget)
-{
-	if (FireAnimation) {
-
-		WeaponMesh->PlayAnimation(FireAnimation, false);
-	}
-
-	if (CasingClass) {
-
-		const USkeletalMeshSocket* AmmoEjectSocket = WeaponMesh->GetSocketByName(FName("AmmoEject"));
-		
-		if (AmmoEjectSocket) {
-
-			FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(WeaponMesh);
-
-			UWorld* World = GetWorld();
-
-			if (World) {
-
-				World->SpawnActor<ACasing>(CasingClass,
-					SocketTransform.GetLocation(),
-					SocketTransform.GetRotation().Rotator());
-			}
-	
-		}
-
-	}
-
-	SpendRound();
-}
-
-void AWeapon::Dropped()
-{
-	SetWeaponState(EWeaponState::EWS_Dropped);
-
-	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
-	WeaponMesh->DetachFromComponent(DetachRules);
-	SetOwner(nullptr);
-	PlayerOwnerCharacter = nullptr;
-	PlayerOwnerController = nullptr;
 }
 
 FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
@@ -343,16 +354,15 @@ FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
 	const FVector EndLoc = SphereCenter + RandVec;
 	const FVector ToEndLoc = EndLoc - TraceStart;
 
-	
-	//DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
-	//DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
-	//DrawDebugLine(
-	//	GetWorld(),
-	//	TraceStart,
-	//	FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
-	//	FColor::Cyan,
-	//	true);
+	/*
+	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
+	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
+	DrawDebugLine(
+		GetWorld(),
+		TraceStart,
+		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
+		FColor::Cyan,
+		true);*/
 
 	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
 }
-
