@@ -15,6 +15,7 @@
 #include "MultiplayerShooter/GameState/MS_GameState.h"
 #include "MultiplayerShooter/PlayerState/MS_PlayerState.h"
 #include "Components/Image.h"
+#include "MultiplayerShooter/HUD/ReturnToMainMenu.h"
 
 void AMS_PlayerController::BeginPlay()
 {
@@ -121,6 +122,29 @@ void AMS_PlayerController::CheckPing(float DeltaTime)
 		if (PingAnimationRunningTime > HighPingDuration) {
 
 			StopHighPingWarning();
+		}
+	}
+}
+
+void AMS_PlayerController::ShowReturnToMainMenu()
+{
+	if (ReturnToMainMenuWidget == nullptr) return;
+	
+	if (ReturnToMainMenu == nullptr)
+	{
+		ReturnToMainMenu = CreateWidget<UReturnToMainMenu>(this, ReturnToMainMenuWidget);
+	}
+	
+	if (ReturnToMainMenu)
+	{
+		bReturnToMainMenuOpen = !bReturnToMainMenuOpen;
+		if (bReturnToMainMenuOpen)
+		{
+			ReturnToMainMenu->MenuSetup();
+		}
+		else
+		{
+			ReturnToMainMenu->MenuTearDown();
 		}
 	}
 }
@@ -332,6 +356,14 @@ void AMS_PlayerController::PollInit()
 			}
 		}
 	}
+}
+
+void AMS_PlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+	if (InputComponent == nullptr) return;
+
+	InputComponent->BindAction("Quit", IE_Pressed, this, &AMS_PlayerController::ShowReturnToMainMenu);
 }
 
 void AMS_PlayerController::ServerRequestServerTime_Implementation(float TimeOfClientRequest)

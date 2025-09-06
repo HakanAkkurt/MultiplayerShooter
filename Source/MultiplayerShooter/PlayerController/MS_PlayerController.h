@@ -54,6 +54,8 @@ protected:
 
 	void PollInit();
 
+	virtual void SetupInputComponent() override;
+
 	// Sync time between client and server
 
 	// Request the current server time, passing in the client's time when the request was sent
@@ -83,9 +85,23 @@ protected:
 	void StopHighPingWarning();
 	void CheckPing(float DeltaTime);
 
+	void ShowReturnToMainMenu();
+
 private:
 	UPROPERTY()
 	class AMS_HUD* MS_HUD;
+
+	/**
+	* Return to main menu
+	*/
+
+	UPROPERTY(EditAnywhere, Category = HUD)
+	TSubclassOf<class UUserWidget> ReturnToMainMenuWidget;
+
+	UPROPERTY()
+	class UReturnToMainMenu* ReturnToMainMenu;
+
+	bool bReturnToMainMenuOpen = false;
 
 	UPROPERTY()
 	class AMS_GameMode* MS_GameMode;
