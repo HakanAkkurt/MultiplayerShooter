@@ -331,7 +331,7 @@ void APlayerCharacter::PlaySwapMontage()
 	}
 }
 
-void APlayerCharacter::Eliminate()
+void APlayerCharacter::Eliminate(bool bPlayerLeftGame)
 {
 	if (Combat) {
 
@@ -345,10 +345,7 @@ void APlayerCharacter::Eliminate()
 		}
 	}
 
-	MulticastEliminate();
-
-	GetWorldTimerManager().SetTimer(EliminateTimer, this, &APlayerCharacter::EliminateTimerFinished,
-		EliminateDelay);
+	MulticastEliminate(bPlayerLeftGame);
 }
 
 void APlayerCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
@@ -376,8 +373,9 @@ void APlayerCharacter::Destroyed()
 	}
 }
 
-void APlayerCharacter::MulticastEliminate_Implementation()
+void APlayerCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 {
+	bLeftGame = bPlayerLeftGame;
 	if (MS_PlayerController) {
 	
 		MS_PlayerController->SetHUDWeaponAmmo(0);
@@ -404,15 +402,34 @@ void APlayerCharacter::MulticastEliminate_Implementation()
 
 		ShowSniperScopeWidget(false);
 	}
+
+	GetWorldTimerManager().SetTimer(EliminateTimer, this, &APlayerCharacter::EliminateTimerFinished,
+		EliminateDelay);
 }
 
 
 void APlayerCharacter::EliminateTimerFinished()
 {
 	AMS_GameMode* MS_GameMode = GetWorld()->GetAuthGameMode<AMS_GameMode>();
-	if (MS_GameMode) {
+	if (MS_GameMode && !bLeftGame) {
 
 		MS_GameMode->RequestRespawn(this, Controller);
+	}
+
+	if (bLeftGame && IsLocallyControlled()) {
+
+		OnLeftGame.Broadcast();
+	}
+}
+
+void APlayerCharacter::ServerLeaveGame_Implementation()
+{
+	AMS_GameMode* MS_GameMode = GetWorld()->GetAuthGameMode<AMS_GameMode>();
+	MS_PlayerState = MS_PlayerState == nullptr ? GetPlayerState<AMS_PlayerState>() : MS_PlayerState;
+
+	if (MS_GameMode && MS_PlayerState) {
+
+		MS_GameMode->PlayerLeftGame(MS_PlayerState);
 	}
 }
 

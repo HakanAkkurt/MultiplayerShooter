@@ -9,6 +9,8 @@
 #include "MultiplayerShooter/Types/CombatState.h"
 #include "PlayerCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
+
 UCLASS()
 class MULTIPLAYERSHOOTER_API APlayerCharacter : public ACharacter, public IInteractWithCrosshairsInterface
 {
@@ -40,10 +42,10 @@ public:
 
 	void PlaySwapMontage();
 
-	void Eliminate();
+	void Eliminate(bool bPlayerLeftGame);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastEliminate();
+	void MulticastEliminate(bool bPlayerLeftGame);
 
 	virtual void Destroyed() override;
 
@@ -63,6 +65,11 @@ public:
 	TMap<FName, class UBoxComponent*> HitCollisionBoxes;
 
 	bool bFinishedSwapping = false;
+
+	UFUNCTION(Server, Reliable)
+	void ServerLeaveGame();
+
+	FOnLeftGame OnLeftGame;
 
 protected:
 	// Called when the game starts or when spawned
@@ -249,6 +256,8 @@ private:
 	float EliminateDelay = 2.f;
 
 	void EliminateTimerFinished();
+
+	bool bLeftGame = false;
 
 	UPROPERTY()
 	class AMS_PlayerState* MS_PlayerState;

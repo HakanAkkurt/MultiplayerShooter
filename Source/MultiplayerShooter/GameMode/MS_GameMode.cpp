@@ -94,7 +94,7 @@ void AMS_GameMode::PlayerEliminated(APlayerCharacter* EliminatedCharacter, APlay
 
 	if (EliminatedCharacter) {
 
-		EliminatedCharacter->Eliminate();
+		EliminatedCharacter->Eliminate(false);
 	}
 }
 
@@ -113,5 +113,22 @@ void AMS_GameMode::RequestRespawn(ACharacter* EliminatedCharacter, AController* 
 		int32 Selection = FMath::RandRange(0, PlayerStarts.Num() - 1);
 
 		RestartPlayerAtPlayerStart(EliminatedController, PlayerStarts[Selection]);
+	}
+}
+
+void AMS_GameMode::PlayerLeftGame(AMS_PlayerState* PlayerLeaving)
+{
+	if (PlayerLeaving == nullptr) return;
+
+	AMS_GameState* MS_GameState = GetGameState<AMS_GameState>();
+	if (MS_GameState && MS_GameState->TopScoringPlayers.Contains(PlayerLeaving)) {
+
+		MS_GameState->TopScoringPlayers.Remove(PlayerLeaving);
+	}
+
+	APlayerCharacter* CharacterLeaving = Cast<APlayerCharacter>(PlayerLeaving->GetPawn());
+	if (CharacterLeaving) {
+
+		CharacterLeaving->Eliminate(true);
 	}
 }

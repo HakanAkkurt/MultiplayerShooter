@@ -24,7 +24,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void PlayerEliminated(class APlayerCharacter* EliminatedCharacter, class APlayerController* VictimController, class APlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
-	
+	void PlayerLeftGame(class AMS_PlayerState* PlayerLeaving);
+
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;
 
