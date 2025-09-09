@@ -30,5 +30,8 @@
 			"Name": "SteamSockets",
 			"Enabled": true
 		}
+	],
+	"TargetPlatforms": [
+		"Windows"
 	]
 }
