@@ -22,6 +22,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
 #include "MultiplayerShooter/Components/LagCompensationComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "MultiplayerShooter/GameState/MS_GameState.h"
 
 
 // Sets default values
@@ -159,6 +162,35 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, Health);
 	DOREPLIFETIME(APlayerCharacter, Shield);
 	DOREPLIFETIME(APlayerCharacter, bDisableGameplay);
+}
+
+void APlayerCharacter::MulticastGainedTheLead_Implementation()
+{
+	if (CrownSystem == nullptr) return;
+	if (CrownComponent == nullptr)
+	{
+		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			CrownSystem,
+			GetCapsuleComponent(),
+			FName(),
+			GetActorLocation() + FVector(0.f, 0.f, 110.f),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false
+		);
+	}
+	if (CrownComponent)
+	{
+		CrownComponent->Activate();
+	}
+}
+
+void APlayerCharacter::MulticastLostTheLead_Implementation()
+{
+	if (CrownComponent)
+	{
+		CrownComponent->DestroyComponent();
+	}
 }
 
 // Called when the game starts or when spawned
@@ -401,6 +433,11 @@ void APlayerCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 		&& Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle) {
 
 		ShowSniperScopeWidget(false);
+	}
+
+	if (CrownComponent)
+	{
+		CrownComponent->DestroyComponent();
 	}
 
 	GetWorldTimerManager().SetTimer(EliminateTimer, this, &APlayerCharacter::EliminateTimerFinished,
@@ -833,6 +870,13 @@ void APlayerCharacter::PollInit()
 
 			MS_PlayerState->AddToScore(0.f);
 			MS_PlayerState->AddToDefeats(0);
+
+			AMS_GameState* MS_GameState = Cast<AMS_GameState>(UGameplayStatics::GetGameState(this));
+		
+			if (MS_GameState && MS_GameState->TopScoringPlayers.Contains(MS_PlayerState)) {
+
+				MulticastGainedTheLead();
+			}
 		}
 	}
 }

@@ -70,7 +70,7 @@ public:
 	ULagCompensationComponent();
 	friend class APlayerCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
+	//void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
 
 	/**
 	* Hitscan

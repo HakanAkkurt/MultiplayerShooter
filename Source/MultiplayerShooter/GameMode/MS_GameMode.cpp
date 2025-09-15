@@ -82,9 +82,36 @@ void AMS_GameMode::PlayerEliminated(APlayerCharacter* EliminatedCharacter, APlay
 
 	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && MS_GameState) {
 
+		TArray<AMS_PlayerState*> PlayersCurrentlyInTheLead;
+		for (auto LeadPlayer : MS_GameState->TopScoringPlayers)
+		{
+			PlayersCurrentlyInTheLead.Add(LeadPlayer);
+		}
+
 		AttackerPlayerState->AddToScore(1.f);
 
 		MS_GameState->UpdateTopScore(AttackerPlayerState);
+
+		if (MS_GameState->TopScoringPlayers.Contains(AttackerPlayerState))
+		{
+			APlayerCharacter* Leader = Cast<APlayerCharacter>(AttackerPlayerState->GetPawn());
+			if (Leader)
+			{
+				Leader->MulticastGainedTheLead();
+			}
+		}
+
+		for (int32 i = 0; i < PlayersCurrentlyInTheLead.Num(); i++)
+		{
+			if (!MS_GameState->TopScoringPlayers.Contains(PlayersCurrentlyInTheLead[i]))
+			{
+				APlayerCharacter* Loser = Cast<APlayerCharacter>(PlayersCurrentlyInTheLead[i]->GetPawn());
+				if (Loser)
+				{
+					Loser->MulticastLostTheLead();
+				}
+			}
+		}
 	}
 
 	if (VictimPlayerState) {
