@@ -37,20 +37,24 @@ void AProjectileBullet::PostEditChangeProperty(FPropertyChangedEvent& Event)
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	APlayerCharacter* OwnerCharacter = Cast<APlayerCharacter>(GetOwner());
-	if (OwnerCharacter)
-	{
+	if (OwnerCharacter) {
+
 		AMS_PlayerController* OwnerController = Cast<AMS_PlayerController>(OwnerCharacter->Controller);
-		if (OwnerController)
-		{
-			if (OwnerCharacter->HasAuthority() && !bUseServerSideRewind)
-			{
-				UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+		if (OwnerController) {
+
+			if (OwnerCharacter->HasAuthority() && !bUseServerSideRewind) {
+
+				const float DamageToCause = Hit.BoneName.ToString() == FString("head") ? HeadShotDamage : Damage;
+
+				UGameplayStatics::ApplyDamage(OtherActor, DamageToCause, OwnerController, this, UDamageType::StaticClass());
 				Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
+				
 				return;
 			}
+
 			APlayerCharacter* HitCharacter = Cast<APlayerCharacter>(OtherActor);
-			if (bUseServerSideRewind && OwnerCharacter->GetLagCompensation() && OwnerCharacter->IsLocallyControlled() && HitCharacter)
-			{
+			if (bUseServerSideRewind && OwnerCharacter->GetLagCompensation() && OwnerCharacter->IsLocallyControlled() && HitCharacter) {
+
 				OwnerCharacter->GetLagCompensation()->ProjectileServerScoreRequest(
 					HitCharacter,
 					TraceStart,
