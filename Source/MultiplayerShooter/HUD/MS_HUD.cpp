@@ -5,6 +5,10 @@
 #include "GameFramework/PlayerController.h"
 #include "CharacterOverlay.h"
 #include "Announcement.h"
+#include "EliminateAnnouncement.h"
+#include "Components/HorizontalBox.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/CanvasPanelSlot.h"
 
 void AMS_HUD::DrawHUD()
 {
@@ -76,6 +80,58 @@ void AMS_HUD::AddAnnouncement()
 
 		Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
 		Announcement->AddToViewport();
+	}
+}
+
+void AMS_HUD::AddEliminateAnnouncement(FString Attacker, FString Victim)
+{
+	OwningPlayer = OwningPlayer == nullptr ? GetOwningPlayerController() : OwningPlayer;
+
+	if (OwningPlayer && EliminateAnnouncementClass) {
+
+		UEliminateAnnouncement* EliminateAnnouncementWidget = CreateWidget<UEliminateAnnouncement>(OwningPlayer, EliminateAnnouncementClass);
+		
+		if (EliminateAnnouncementWidget) {
+
+			EliminateAnnouncementWidget->SetEliminateAnnouncementText(Attacker, Victim);
+			EliminateAnnouncementWidget->AddToViewport();
+
+			for (UEliminateAnnouncement* Message : EliminateMessages) {
+
+				if (Message && Message->AnnouncementBox) {
+
+					UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(Message->AnnouncementBox);
+					if (CanvasSlot) {
+
+						FVector2D Position = CanvasSlot->GetPosition();
+						FVector2D NewPosition(CanvasSlot->GetPosition().X,
+							Position.Y - CanvasSlot->GetSize().Y);
+
+						CanvasSlot->SetPosition(NewPosition);
+					}
+				}
+			}
+
+			EliminateMessages.Add(EliminateAnnouncementWidget);
+
+			FTimerHandle EliminateMessageTimer;
+			FTimerDelegate EliminateMessageDelegate;
+
+			EliminateMessageDelegate.BindUFunction(this, FName("EliminateAnnouncementTimerFinished"), EliminateAnnouncementWidget);
+			GetWorldTimerManager().SetTimer(
+				EliminateMessageTimer,
+				EliminateMessageDelegate,
+				EliminateAnnouncementTime,
+				false
+			);
+		}
+	}
+}
+
+void AMS_HUD::EliminateAnnouncementTimerFinished(UEliminateAnnouncement* MessageToRemove)
+{
+	if (MessageToRemove) {
+		MessageToRemove->RemoveFromParent();
 	}
 }
 

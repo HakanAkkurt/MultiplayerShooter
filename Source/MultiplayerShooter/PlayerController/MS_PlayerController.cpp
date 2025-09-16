@@ -17,6 +17,49 @@
 #include "Components/Image.h"
 #include "MultiplayerShooter/HUD/ReturnToMainMenu.h"
 
+void AMS_PlayerController::BroadcastEliminate(APlayerState* Attacker, APlayerState* Victim)
+{
+	ClientEliminateAnnouncement(Attacker, Victim);
+}
+
+void AMS_PlayerController::ClientEliminateAnnouncement_Implementation(APlayerState* Attacker, APlayerState* Victim)
+{
+	APlayerState* Self = GetPlayerState<APlayerState>();
+
+	if (Attacker && Victim && Self) {
+
+		MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+		if (MS_HUD) {
+
+			if (Attacker == Self && Victim != Self) {
+				MS_HUD->AddEliminateAnnouncement("You", Victim->GetPlayerName());
+
+				return;
+			}
+
+			if (Victim == Self && Attacker != Self) {
+				MS_HUD->AddEliminateAnnouncement(Attacker->GetPlayerName(), "you");
+
+				return;
+			}
+
+			if (Attacker == Victim && Attacker == Self)
+			{
+				MS_HUD->AddEliminateAnnouncement("You", "yourself");
+				return;
+			}
+
+			if (Attacker == Victim && Attacker != Self)
+			{
+				MS_HUD->AddEliminateAnnouncement(Attacker->GetPlayerName(), "themselves");
+				return;
+			}
+
+			MS_HUD->AddEliminateAnnouncement(Attacker->GetPlayerName(), Victim->GetPlayerName());
+		}
+	}
+}
+
 void AMS_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();

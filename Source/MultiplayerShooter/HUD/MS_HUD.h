@@ -48,10 +48,15 @@ public:
 
 	void AddAnnouncement();
 
+	void AddEliminateAnnouncement(FString Attacker, FString Victim);
+
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	
+	UPROPERTY()
+	class APlayerController* OwningPlayer;
 
 	FHUDPackage HUDPackage;
 
@@ -59,6 +64,18 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float CrosshairSpreadMax = 16.f;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UEliminateAnnouncement> EliminateAnnouncementClass;
+
+	UPROPERTY(EditAnywhere)
+	float EliminateAnnouncementTime = 3.0f;
+
+	UFUNCTION()
+	void EliminateAnnouncementTimerFinished(UEliminateAnnouncement* MessageToRemove);
+
+	UPROPERTY()
+	TArray<UEliminateAnnouncement*> EliminateMessages;
 
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }

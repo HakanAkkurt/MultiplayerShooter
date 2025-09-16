@@ -123,6 +123,15 @@ void AMS_GameMode::PlayerEliminated(APlayerCharacter* EliminatedCharacter, APlay
 
 		EliminatedCharacter->Eliminate(false);
 	}
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		AMS_PlayerController* MS_PlayerController = Cast<AMS_PlayerController>(*It);
+		if (MS_PlayerController && AttackerPlayerState && VictimPlayerState)
+		{
+			MS_PlayerController->BroadcastEliminate(AttackerPlayerState, VictimPlayerState);
+		}
+	}
 }
 
 void AMS_GameMode::RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController)
