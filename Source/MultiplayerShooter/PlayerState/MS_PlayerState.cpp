@@ -12,6 +12,7 @@ void AMS_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMS_PlayerState, Defeats);
+	DOREPLIFETIME(AMS_PlayerState, Team);
 }
 
 void AMS_PlayerState::OnRep_Score()
@@ -76,3 +77,22 @@ void AMS_PlayerState::AddToDefeats(int32 DefeatsAmount)
 	}
 }
 
+void AMS_PlayerState::OnRep_Team()
+{
+	APlayerCharacter* P_Character = Cast <APlayerCharacter>(GetPawn());
+	if (P_Character)
+	{
+		P_Character->SetTeamColor(Team);
+	}
+}
+
+void AMS_PlayerState::SetTeam(ETeam TeamToSet)
+{
+	Team = TeamToSet;
+
+	APlayerCharacter* P_Character = Cast <APlayerCharacter>(GetPawn());
+	if (P_Character)
+	{
+		P_Character->SetTeamColor(Team);
+	}
+}

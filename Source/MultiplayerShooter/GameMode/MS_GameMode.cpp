@@ -35,7 +35,7 @@ void AMS_GameMode::OnMatchStateSet()
 		AMS_PlayerController* MS_Player = Cast<AMS_PlayerController>(*It);
 		if (MS_Player) {
 
-			MS_Player->OnMatchStateSet(MatchState);
+			MS_Player->OnMatchStateSet(MatchState, bTeamsMatch);
 		}
 	}
 }
@@ -70,7 +70,7 @@ void AMS_GameMode::Tick(float DeltaTime)
 	}
 }
 
-void AMS_GameMode::PlayerEliminated(APlayerCharacter* EliminatedCharacter, APlayerController* VictimController, APlayerController* AttackerController)
+void AMS_GameMode::PlayerEliminated(APlayerCharacter* EliminatedCharacter, AMS_PlayerController* VictimController, AMS_PlayerController* AttackerController)
 {
 	if (AttackerController == nullptr || AttackerController->PlayerState == nullptr) return;
 	if (VictimController == nullptr || VictimController->PlayerState == nullptr) return;
@@ -167,4 +167,9 @@ void AMS_GameMode::PlayerLeftGame(AMS_PlayerState* PlayerLeaving)
 
 		CharacterLeaving->Eliminate(true);
 	}
+}
+
+float AMS_GameMode::CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage)
+{
+	return BaseDamage;
 }

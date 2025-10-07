@@ -16,6 +16,7 @@
 #include "MultiplayerShooter/PlayerState/MS_PlayerState.h"
 #include "Components/Image.h"
 #include "MultiplayerShooter/HUD/ReturnToMainMenu.h"
+#include "MultiplayerShooter/Types/Announcement.h"
 
 void AMS_PlayerController::BroadcastEliminate(APlayerState* Attacker, APlayerState* Victim)
 {
@@ -87,6 +88,68 @@ void AMS_PlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMS_PlayerController, MatchState);
+	DOREPLIFETIME(AMS_PlayerController, bShowTeamScores);
+}
+
+void AMS_PlayerController::HideTeamScores()
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+
+	if (MS_HUD &&
+		MS_HUD->CharacterOverlay &&
+		MS_HUD->CharacterOverlay->RedTeamScore &&
+		MS_HUD->CharacterOverlay->BlueTeamScore &&
+		MS_HUD->CharacterOverlay->ScoreSpacerText) {
+
+		MS_HUD->CharacterOverlay->RedTeamScore->SetText(FText());
+		MS_HUD->CharacterOverlay->BlueTeamScore->SetText(FText());
+		MS_HUD->CharacterOverlay->ScoreSpacerText->SetText(FText());
+	}
+}
+
+void AMS_PlayerController::InitTeamScores()
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+
+	if (MS_HUD &&
+		MS_HUD->CharacterOverlay &&
+		MS_HUD->CharacterOverlay->RedTeamScore &&
+		MS_HUD->CharacterOverlay->BlueTeamScore &&
+		MS_HUD->CharacterOverlay->ScoreSpacerText) {
+
+		FString Zero("0");
+		FString Spacer("|");
+
+		MS_HUD->CharacterOverlay->RedTeamScore->SetText(FText::FromString(Zero));
+		MS_HUD->CharacterOverlay->BlueTeamScore->SetText(FText::FromString(Zero));
+		MS_HUD->CharacterOverlay->ScoreSpacerText->SetText(FText::FromString(Spacer));
+	}
+}
+
+void AMS_PlayerController::SetHUDRedTeamScore(int32 RedScore)
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+
+	if (MS_HUD &&
+		MS_HUD->CharacterOverlay &&
+		MS_HUD->CharacterOverlay->RedTeamScore) {
+
+		FString ScoreText = FString::Printf(TEXT("%d"), RedScore);
+		MS_HUD->CharacterOverlay->RedTeamScore->SetText(FText::FromString(ScoreText));
+	}
+}
+
+void AMS_PlayerController::SetHUDBlueTeamScore(int32 BlueScore)
+{
+	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
+
+	if (MS_HUD &&
+		MS_HUD->CharacterOverlay &&
+		MS_HUD->CharacterOverlay->BlueTeamScore) {
+
+		FString ScoreText = FString::Printf(TEXT("%d"), BlueScore);
+		MS_HUD->CharacterOverlay->BlueTeamScore->SetText(FText::FromString(ScoreText));
+	}
 }
 
 void AMS_PlayerController::CheckTimeSync(float DeltaTime)
@@ -192,6 +255,86 @@ void AMS_PlayerController::ShowReturnToMainMenu()
 	}
 }
 
+void AMS_PlayerController::OnRep_ShowTeamScores()
+{
+	if (bShowTeamScores) {
+
+		InitTeamScores();
+	}
+	else {
+
+		HideTeamScores();
+	}
+}
+
+FString AMS_PlayerController::GetInfoText(const TArray<class AMS_PlayerState*>& Players)
+{
+	AMS_PlayerState* MS_PlayerState = GetPlayerState<AMS_PlayerState>();
+	if (MS_PlayerState == nullptr) return FString();
+	
+	FString InfoTextString;
+	if (Players.Num() == 0) {
+		InfoTextString = Announcement::ThereIsNoWinner;
+	}
+	else if (Players.Num() == 1 && Players[0] == MS_PlayerState) {
+
+		InfoTextString = Announcement::YouAreTheWinner;
+	}
+	else if (Players.Num() == 1) {
+
+		InfoTextString = FString::Printf(TEXT("Winner: \n%s"), *Players[0]->GetPlayerName());
+	}
+	else if (Players.Num() > 1) {
+
+		InfoTextString = Announcement::PlayersTiedForTheWin;
+		InfoTextString.Append(FString("\n"));
+
+		for (auto TiedPlayer : Players) {
+			InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
+		}
+	}
+
+	return InfoTextString;
+}
+
+FString AMS_PlayerController::GetTeamsInfoText(AMS_GameState* MSGameState)
+{
+	if (MSGameState == nullptr) return FString();
+	FString InfoTextString;
+
+	const int32 RedTeamScore = MSGameState->RedTeamScore;
+	const int32 BlueTeamScore = MSGameState->BlueTeamScore;
+
+	if (RedTeamScore == 0 && BlueTeamScore == 0) {
+
+		InfoTextString = Announcement::ThereIsNoWinner;
+	}
+	else if (RedTeamScore == BlueTeamScore) {
+
+		InfoTextString = FString::Printf(TEXT("%s\n"), *Announcement::TeamsTiedForTheWin);
+		InfoTextString.Append(Announcement::RedTeam);
+		InfoTextString.Append(TEXT("\n"));
+		InfoTextString.Append(Announcement::BlueTeam);
+		InfoTextString.Append(TEXT("\n"));
+	}
+	else if (RedTeamScore > BlueTeamScore) {
+
+		InfoTextString = Announcement::RedTeamWins;
+		InfoTextString.Append(TEXT("\n"));
+		InfoTextString.Append(FString::Printf(TEXT("%s: %d\n"), *Announcement::RedTeam, RedTeamScore));
+		InfoTextString.Append(FString::Printf(TEXT("%s: %d\n"), *Announcement::BlueTeam, BlueTeamScore));
+	}
+	else if (BlueTeamScore > RedTeamScore) {
+
+		InfoTextString = Announcement::BlueTeamWins;
+		InfoTextString.Append(TEXT("\n"));
+		InfoTextString.Append(FString::Printf(TEXT("%s: %d\n"), *Announcement::BlueTeam, BlueTeamScore));
+		InfoTextString.Append(FString::Printf(TEXT("%s: %d\n"), *Announcement::RedTeam, RedTeamScore));
+	}
+
+	return InfoTextString;
+}
+
 void AMS_PlayerController::ServerCheckMatchState_Implementation()
 {
 	AMS_GameMode* GameMode = Cast<AMS_GameMode>(UGameplayStatics::GetGameMode(this));
@@ -240,13 +383,13 @@ void AMS_PlayerController::ReceivedPlayer()
 	}
 }
 
-void AMS_PlayerController::OnMatchStateSet(FName State)
+void AMS_PlayerController::OnMatchStateSet(FName State, bool bTeamsMatch)
 {
 	MatchState = State;
 
 	if (MatchState == MatchState::InProgress) {
 
-		HandleMatchHasStarted();
+		HandleMatchHasStarted(bTeamsMatch);
 	}
 	else if (MatchState == MatchState::Cooldown) {
 		
@@ -272,8 +415,10 @@ void AMS_PlayerController::ServerReportPingStatus_Implementation(bool bHighPing)
 	HighPingDelegate.Broadcast(bHighPing);
 }
 
-void AMS_PlayerController::HandleMatchHasStarted()
+void AMS_PlayerController::HandleMatchHasStarted(bool bTeamsMatch)
 {
+	if (HasAuthority()) bShowTeamScores = bTeamsMatch;
+
 	MS_HUD = MS_HUD == nullptr ? Cast<AMS_HUD>(GetHUD()) : MS_HUD;
 	if (MS_HUD) {
 
@@ -282,6 +427,17 @@ void AMS_PlayerController::HandleMatchHasStarted()
 		if (MS_HUD->Announcement) {
 			MS_HUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
+
+		if (!HasAuthority()) return;
+		if (bTeamsMatch) {
+
+			InitTeamScores();
+		}
+		else {
+
+			HideTeamScores();
+		}
+
 	}
 }
 
@@ -298,7 +454,7 @@ void AMS_PlayerController::HandleCooldown()
 
 			MS_HUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 
-			FString AnnouncementText("New match starts in:");
+			FString AnnouncementText = Announcement::NewMatchStartsIn;
 			MS_HUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
 
 			AMS_GameState* MS_GameState = Cast<AMS_GameState>(UGameplayStatics::GetGameState(this));
@@ -307,28 +463,8 @@ void AMS_PlayerController::HandleCooldown()
 			if (MS_GameState && MS_PlayerState) {
 
 				TArray<AMS_PlayerState*> TopPlayers = MS_GameState->TopScoringPlayers;
-				
-				FString InfoTextString;
-				if (TopPlayers.Num() == 0) {
 
-					InfoTextString = FString("There is no winner.");
-				}
-				else if (TopPlayers.Num() == 1 && TopPlayers[0] == MS_PlayerState) {
-
-					InfoTextString = FString("You are the winner!");
-				}
-				else if (TopPlayers.Num() == 1) {
-
-					InfoTextString = FString::Printf(TEXT("Winner: \n%s"), *TopPlayers[0]->GetPlayerName());
-				}
-				else if (TopPlayers.Num() > 1) {
-
-					InfoTextString = FString("Players tied for the win:\n");
-					for (auto TiedPlayer : TopPlayers) {
-						InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
-					}
-				}
-
+				FString InfoTextString = bShowTeamScores ? GetTeamsInfoText(MS_GameState) : GetInfoText(TopPlayers);
 				MS_HUD->Announcement->InfoText->SetText(FText::FromString(InfoTextString));
 			}
 

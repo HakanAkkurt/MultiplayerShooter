@@ -247,16 +247,7 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(cons
 				ECC_HitBox
 			);
 			APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(ConfirmHitResult.GetActor());
-			if (PlayerCharacter)
-			{
-				if (ConfirmHitResult.Component.IsValid())
-				{
-					UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
-					if (Box)
-					{
-						DrawDebugBox(GetWorld(), Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 8.f);
-					}
-				}
+			if (PlayerCharacter) {
 
 				if (ShotgunResult.BodyShots.Contains(PlayerCharacter))
 				{
@@ -331,22 +322,6 @@ void ULagCompensationComponent::EnableCharacterMeshCollision(APlayerCharacter* H
 		HitCharacter->GetMesh()->SetCollisionEnabled(CollisionEnabled);
 	}
 }
-
-//void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package, const FColor& Color)
-//{
-//	for (auto& BoxInfo : Package.HitBoxInfo)
-//	{
-//		DrawDebugBox(
-//			GetWorld(),
-//			BoxInfo.Value.Location,
-//			BoxInfo.Value.BoxExtent,
-//			FQuat(BoxInfo.Value.Rotation),
-//			Color,
-//			false,
-//			4.f
-//		);
-//	}
-//}
 
 FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(APlayerCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime)
 {
@@ -519,8 +494,6 @@ void ULagCompensationComponent::SaveFramePackage()
 		FFramePackage ThisFrame;
 		SaveFramePackage(ThisFrame);
 		FrameHistory.AddHead(ThisFrame);
-
-		//ShowFramePackage(ThisFrame, FColor::Red);
 	}
 }
 

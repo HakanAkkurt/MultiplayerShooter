@@ -193,6 +193,26 @@ void APlayerCharacter::MulticastLostTheLead_Implementation()
 	}
 }
 
+void APlayerCharacter::SetTeamColor(ETeam Team)
+{
+	if (GetMesh() == nullptr || OriginalMaterial == nullptr) return;
+	switch (Team) {
+
+	case ETeam::ET_NoTeam:
+		GetMesh()->SetMaterial(3, OriginalMaterial);
+
+		break;
+	case ETeam::ET_BlueTeam:
+		GetMesh()->SetMaterial(3, BlueMaterial);
+
+		break;
+	case ETeam::ET_RedTeam:
+		GetMesh()->SetMaterial(3, RedMaterial);
+
+		break;
+	}
+}
+
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
@@ -222,7 +242,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	RotateInPlace(DeltaTime);
 
-	HideCamereIfCharacterClose();
+	HideCharacterIfCameraClose();
 
 	PollInit();
 }
@@ -396,7 +416,7 @@ void APlayerCharacter::Destroyed()
 {
 	Super::Destroyed();
 
-	AMS_GameMode* MS_GameMode = Cast<AMS_GameMode>(UGameplayStatics::GetGameMode(this));
+	MS_GameMode = MS_GameMode == nullptr ? GetWorld()->GetAuthGameMode<AMS_GameMode>() : MS_GameMode;
 	bool bMatchNotInProgress = MS_GameMode && MS_GameMode->GetMatchState() != MatchState::InProgress;
 
 	if (Combat && Combat->EquippedWeapon && bMatchNotInProgress) {
@@ -428,6 +448,7 @@ void APlayerCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 	// Disable collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	if (IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedWeapon
 		&& Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle) {
@@ -447,7 +468,7 @@ void APlayerCharacter::MulticastEliminate_Implementation(bool bPlayerLeftGame)
 
 void APlayerCharacter::EliminateTimerFinished()
 {
-	AMS_GameMode* MS_GameMode = GetWorld()->GetAuthGameMode<AMS_GameMode>();
+	MS_GameMode = MS_GameMode == nullptr ? GetWorld()->GetAuthGameMode<AMS_GameMode>() : MS_GameMode;
 	if (MS_GameMode && !bLeftGame) {
 
 		MS_GameMode->RequestRespawn(this, Controller);
@@ -461,7 +482,7 @@ void APlayerCharacter::EliminateTimerFinished()
 
 void APlayerCharacter::ServerLeaveGame_Implementation()
 {
-	AMS_GameMode* MS_GameMode = GetWorld()->GetAuthGameMode<AMS_GameMode>();
+	MS_GameMode = MS_GameMode == nullptr ? GetWorld()->GetAuthGameMode<AMS_GameMode>() : MS_GameMode;
 	MS_PlayerState = MS_PlayerState == nullptr ? GetPlayerState<AMS_PlayerState>() : MS_PlayerState;
 
 	if (MS_GameMode && MS_PlayerState) {
@@ -493,7 +514,11 @@ void APlayerCharacter::GrenadeButtonPressed()
 
 void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
-	if (bEliminated) return;
+	MS_GameMode = MS_GameMode == nullptr ? GetWorld()->GetAuthGameMode<AMS_GameMode>() : MS_GameMode;
+
+	if (bEliminated || MS_GameMode == nullptr) return;
+
+	Damage = MS_GameMode->CalculateDamage(InstigatorController, Controller, Damage);
 
 	float DamageToHealth = Damage;
 	if (Shield > 0.f) {
@@ -517,7 +542,6 @@ void APlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const U
 
 	if (Health == 0.f) {
 
-		AMS_GameMode* MS_GameMode = GetWorld()->GetAuthGameMode<AMS_GameMode>();
 		if (MS_GameMode) {
 
 			MS_PlayerController = MS_PlayerController == nullptr ? Cast<AMS_PlayerController>(Controller) : MS_PlayerController;
@@ -769,7 +793,7 @@ void APlayerCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
-void APlayerCharacter::HideCamereIfCharacterClose()
+void APlayerCharacter::HideCharacterIfCameraClose()
 {
 	if (!IsLocallyControlled()) return;
 
@@ -780,6 +804,10 @@ void APlayerCharacter::HideCamereIfCharacterClose()
 
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
 		}
+		if (Combat && Combat->SecondaryWeapon && Combat->SecondaryWeapon->GetWeaponMesh()) {
+
+			Combat->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
 	}
 	else {
 
@@ -787,6 +815,10 @@ void APlayerCharacter::HideCamereIfCharacterClose()
 		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh()) {
 
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+		if (Combat && Combat->SecondaryWeapon && Combat->SecondaryWeapon->GetWeaponMesh()) {
+
+			Combat->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
 }
@@ -837,7 +869,7 @@ void APlayerCharacter::UpdateHUDAmmo()
 
 void APlayerCharacter::SpawnDefaultWeapon()
 {
-	AMS_GameMode* MS_GameMode = Cast<AMS_GameMode>(UGameplayStatics::GetGameMode(this));
+	MS_GameMode = MS_GameMode == nullptr ? GetWorld()->GetAuthGameMode<AMS_GameMode>() : MS_GameMode;
 	UWorld* World = GetWorld();
 
 	if (MS_GameMode && World && !bEliminated && DefaultWeaponClass) {
@@ -870,6 +902,7 @@ void APlayerCharacter::PollInit()
 
 			MS_PlayerState->AddToScore(0.f);
 			MS_PlayerState->AddToDefeats(0);
+			SetTeamColor(MS_PlayerState->GetTeam());
 
 			AMS_GameState* MS_GameState = Cast<AMS_GameState>(UGameplayStatics::GetGameState(this));
 		

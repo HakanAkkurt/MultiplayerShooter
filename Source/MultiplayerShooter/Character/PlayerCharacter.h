@@ -7,6 +7,7 @@
 #include "MultiplayerShooter/Types/TurnInPlace.h"
 #include "MultiplayerShooter/Interfaces/InteractWithCrosshairsInterface.h"
 #include "MultiplayerShooter/Types/CombatState.h"
+#include "MultiplayerShooter/Types/Team.h"
 #include "PlayerCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
@@ -76,6 +77,8 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastLostTheLead();
+
+	void SetTeamColor(ETeam Team);
 
 protected:
 	// Called when the game starts or when spawned
@@ -224,7 +227,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* SwapMontage;
 
-	void HideCamereIfCharacterClose();
+	void HideCharacterIfCameraClose();
 
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
@@ -282,6 +285,20 @@ private:
 	// Default weapon
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AWeapon> DefaultWeaponClass;
+
+	// Team colors
+
+	UPROPERTY(EditAnywhere, Category = Eliminate)
+	UMaterial* RedMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Eliminate)
+	UMaterial* BlueMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Eliminate)
+	UMaterial* OriginalMaterial;
+
+	UPROPERTY()
+	class AMS_GameMode* MS_GameMode;
 
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
