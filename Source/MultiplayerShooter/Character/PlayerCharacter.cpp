@@ -25,6 +25,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "MultiplayerShooter/GameState/MS_GameState.h"
+#include "MultiplayerShooter/PlayerStart/TeamPlayerStart.h"
 
 
 // Sets default values
@@ -258,6 +259,12 @@ void APlayerCharacter::RotateInPlace(float DeltaTime)
 		return;
 	}
 
+	if (Combat && Combat->EquippedWeapon) {
+
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		bUseControllerRotationYaw = true;
+	}
+
 	if (bDisableGameplay) {
 
 		bUseControllerRotationYaw = false;
@@ -394,18 +401,7 @@ void APlayerCharacter::PlaySwapMontage()
 
 void APlayerCharacter::Eliminate(bool bPlayerLeftGame)
 {
-	if (Combat) {
-
-		if (Combat->EquippedWeapon) {
-
-			DropOrDestroyWeapon(Combat->EquippedWeapon);
-		}
-		if (Combat->SecondaryWeapon) {
-
-			DropOrDestroyWeapon(Combat->SecondaryWeapon);
-		}
-	}
-
+	DropOrDestroyWeapons();
 	MulticastEliminate(bPlayerLeftGame);
 }
 
@@ -419,6 +415,59 @@ void APlayerCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
 	else {
 		Weapon->Dropped();
 	}
+}
+
+void APlayerCharacter::DropOrDestroyWeapons()
+{
+	if (Combat) {
+
+		if (Combat->EquippedWeapon) {
+
+			DropOrDestroyWeapon(Combat->EquippedWeapon);
+		}
+		if (Combat->SecondaryWeapon) {
+
+			DropOrDestroyWeapon(Combat->SecondaryWeapon);
+		}
+
+		if (Combat->TheFlag) {
+			Combat->TheFlag->Dropped();
+		}
+	}
+}
+
+void APlayerCharacter::SetSpawnPoint()
+{
+	if (HasAuthority() && MS_PlayerState->GetTeam() != ETeam::ET_NoTeam) {
+
+		TArray<AActor*> PlayerStarts;
+		UGameplayStatics::GetAllActorsOfClass(this, ATeamPlayerStart::StaticClass(), PlayerStarts);
+		TArray<ATeamPlayerStart*> TeamPlayerStarts;
+
+		for (auto Start : PlayerStarts) {
+			ATeamPlayerStart* TeamStart = Cast<ATeamPlayerStart>(Start);
+			if (TeamStart && TeamStart->Team == MS_PlayerState->GetTeam()) {
+
+				TeamPlayerStarts.Add(TeamStart);
+			}
+		}
+		if (TeamPlayerStarts.Num() > 0) {
+
+			ATeamPlayerStart* ChosenPlayerStart = TeamPlayerStarts[FMath::RandRange(0, TeamPlayerStarts.Num() - 1)];
+			SetActorLocationAndRotation(
+				ChosenPlayerStart->GetActorLocation(),
+				ChosenPlayerStart->GetActorRotation()
+			);
+		}
+	}
+}
+
+void APlayerCharacter::OnPlayerStateInitialized()
+{
+	MS_PlayerState->AddToScore(0.f);
+	MS_PlayerState->AddToDefeats(0);
+	SetTeamColor(MS_PlayerState->GetTeam());
+	SetSpawnPoint();
 }
 
 void APlayerCharacter::Destroyed()
@@ -920,9 +969,7 @@ void APlayerCharacter::PollInit()
 		MS_PlayerState = GetPlayerState<AMS_PlayerState>();
 		if (MS_PlayerState) {
 
-			MS_PlayerState->AddToScore(0.f);
-			MS_PlayerState->AddToDefeats(0);
-			SetTeamColor(MS_PlayerState->GetTeam());
+			OnPlayerStateInitialized();
 
 			AMS_GameState* MS_GameState = Cast<AMS_GameState>(UGameplayStatics::GetGameState(this));
 		
@@ -1010,4 +1057,19 @@ bool APlayerCharacter::IsHoldingTheFlag() const
 	if (Combat == nullptr) return false;
 
 	return Combat->bHoldingTheFlag;
+}
+
+ETeam APlayerCharacter::GetTeam()
+{
+	MS_PlayerState = MS_PlayerState == nullptr ? GetPlayerState<AMS_PlayerState>() : MS_PlayerState;
+
+	if (MS_PlayerState == nullptr) return ETeam::ET_NoTeam;
+
+	return MS_PlayerState->GetTeam();
+}
+
+void APlayerCharacter::SetHoldingTheFlag(bool bHolding)
+{
+	if (Combat == nullptr) return;
+	Combat->bHoldingTheFlag = bHolding;
 }
