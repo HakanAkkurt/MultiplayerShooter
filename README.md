@@ -1,5 +1,5 @@
 # MultiplayerShooter developed with Unreal Engine 5.6
-
+<br>
 <p align="center">
   <img src="https://github.com/HakanAkkurt/MultiplayerShooter/blob/master/Screenshots/Screenshot1.jpg" width="1800" title="MultiplayerShooter">
 </p>
@@ -23,8 +23,8 @@
 You can see the gameplay on YouTube:
 
 <br>
-<a href="https://www.youtube.com/watch?v=hqmRPGxLrK4" target="_blank">
-<img src="http://img.youtube.com/vi/hqmRPGxLrK4/0.jpg" alt="Multiplayer Shooter Gameplay Trailer" width="1800" border="10" />
+<a href="https://youtu.be/J_ZS9dPmcds" target="_blank">
+<img src="http://img.youtube.com/vi/J_ZS9dPmcds/0.jpg" alt="Multiplayer Shooter Gameplay Trailer" width="1800" border="10" />
 </a>
 
 Assets from Marketplace:
